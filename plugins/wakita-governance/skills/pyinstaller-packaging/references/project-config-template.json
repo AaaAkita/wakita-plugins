@@ -1,0 +1,35 @@
+{
+  "_comment": "PyInstaller 项目打包配置 —— 静态信息存此复用，版本号每次询问",
+
+  "app": {
+    "name": "MyApp",
+    "entry": "main.py",
+    "version": "0.0.0"
+  },
+
+  "company": {
+    "name": "你的公司名",
+    "copyright": "Copyright (c) 2024"
+  },
+
+  "packaging": {
+    "mode": "onefile",
+    "icon": "assets/icon.ico",
+    "console": true
+  },
+
+  "resources": {
+    "data_dirs": [
+      {"src": "assets", "dest": "assets"},
+      {"src": "config.json", "dest": "."}
+    ],
+    "hidden_imports": [],
+    "excludes": ["tkinter", "unittest", "email", "html"]
+  },
+
+  "extra": {
+    "upx_enabled": false,
+    "sign_tool": "",
+    "post_build_script": ""
+  }
+}
