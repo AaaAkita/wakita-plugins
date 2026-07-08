@@ -1,5 +1,5 @@
 {
-  "description": "wakita-governance 管控 hooks —— PreToolUse 危险操作拦截、PostToolUse 写操作留痕与提交规范、UserPromptSubmit 工作规范注入",
+  "description": "wakita-governance 管控 hooks —— PreToolUse 危险操作拦截、PostToolUse 写操作留痕与提交规范 + 分支合并复盘提醒、UserPromptSubmit 工作规范注入",
   "hooks": {
     "PreToolUse": [
       {
@@ -22,6 +22,16 @@
           }
         ],
         "matcher": "Edit|Write|MultiEdit|Bash"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse_merge.py\"",
+            "timeout": 10
+          }
+        ],
+        "matcher": "Bash"
       }
     ],
     "UserPromptSubmit": [
