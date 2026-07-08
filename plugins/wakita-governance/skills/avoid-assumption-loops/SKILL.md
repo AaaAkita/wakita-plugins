@@ -1,16 +1,16 @@
 ---
 name: avoid-assumption-loops
-description: Prevent spiraling trial-and-error by verifying assumptions before iterating, especially when tuning visual/layout parameters.
+description: 在迭代调整前先验证假设，避免陷入"试错螺旋"，尤其在调视觉/布局参数时。
 metadata:
   type: feedback
 ---
 
-**Rule:** Before making iterative adjustments to spacing, sizing, colors, or any visual/layout parameter, first verify that the mechanism actually works and that my change is observable.
+**规则：** 在对间距、尺寸、颜色等任何视觉/布局参数做迭代调整前，先验证该机制确实生效、且你的改动是可观察到的。
 
-**Why:** In a layout-breathing task, I assumed `px-6`, `px-8`, etc. utility classes existed because they look like Tailwind, but this project uses a hand-written utility set without those classes. I iterated on padding values for multiple turns, showed screenshots, and argued about spacing while the computed `padding-left/right` was `0px` the entire time. This wasted the user's time and patience.
+**起因：** 在一次布局呼吸感调整任务中，我假设 `px-6`、`px-8` 等工具类存在（因为看起来像 Tailwind），但这个项目用的是手写工具集，根本没有这些类。我连续多轮调整 padding 值、截图、争论间距，而计算后的 `padding-left/right` 全程都是 `0px`。这浪费了用户的时间和耐心。
 
-**How to apply:**
-- When a CSS/HTML class change does not produce the expected visual effect, stop and inspect the computed style via browser dev tools, preview_eval, or equivalent — do not guess a new value.
-- Before relying on any utility class (especially `px-*`, `py-*`, `mx-*`, `gap-*`), grep the stylesheet to confirm it is defined.
-- After any visual tweak, validate with a measurement or computed-style check, not just a screenshot impression.
-- If the same adjustment fails twice, stop iterating and diagnose the mechanism (missing class, specificity conflict, cached file, wrong selector) before trying a third value.
+**如何应用：**
+- 当某个 CSS/HTML class 改动没产生预期视觉效果时，停下来用浏览器开发者工具、preview_eval 或等价手段检查计算样式--不要直接猜新值。
+- 在依赖任何工具类（尤其 `px-*`、`py-*`、`mx-*`、`gap-*`）前，先 grep 样式表确认它有定义。
+- 任何视觉微调后，用测量值或计算样式校验，不能只凭截图印象。
+- 同一处调整连续失败两次，停止迭代，先诊断机制（class 缺失、优先级冲突、文件缓存、选择器错误）再试第三个值。
