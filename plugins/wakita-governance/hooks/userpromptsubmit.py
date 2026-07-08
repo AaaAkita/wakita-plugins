@@ -1,69 +1,44 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook —— 工作规范注入 + 场景检测。
+"""UserPromptSubmit hook —— 工作规范软提醒 + 场景提示。
 
-每次用户提交 prompt 时注入系统提示。根据 prompt 内容动态追加场景提醒：
-  - 始终注入：工作规范（commit 中文、带证据、不臆测、先探索）
-  - 检测到打包关键词：追加 pyinstaller-packaging Q&A 提醒
+每次用户提交 prompt 时注入轻量规范提示。不强制任何行为，仅作为上下文参考。
 
 协议：stdin 读 JSON，stdout 输出 JSON，必须 exit 0。
 """
 
 import json
-import os
 import sys
 
-# 工作规范（始终注入）
+# 工作规范（始终注入，软提醒）
 _NORMS = """\
 [wakita 工作规范]
-1. 提交信息（commit message）必须使用中文。
-2. 改动代码前先定位，结论带「文件:行号」证据，不凭印象下判断。
-3. 找不到证据就明说"未找到"，不要臆测"可能有"。
-4. 调用子智能体前，先用 wakita-scout 探索现有结构，再派 wakita-builder 实现。
-5. 危险操作（rm -rf / 强推 / DROP 等）会被自动拦截，如需执行请先向用户确认。"""
+1. 提交信息（commit message）使用中文，类型前缀用英文。
+2. 改动代码前先定位，结论带「文件:行号」证据。
+3. 找不到证据明说"未找到"，不臆测。
+4. 危险操作（rm -rf / 强推 / DROP 等）会被自动拦截。
+5. 分支合并至主干后可复盘：有无可复用方案值得沉淀为 skill。
+6. 复杂任务可先探索（wakita-scout）再实现（wakita-builder），最后审查（wakita-auditor）。"""
 
-# 打包关键词 → 触发 pyinstaller-packaging 提醒
+# 打包关键词 → 场景提示
 _PACK_KEYWORDS = [
     "打包", "出包", "构建 exe", "build.py", "build.sh",
     "pyinstaller", "PyInstaller", "打一个 v", "发布版本",
-    "打包成exe", "打包为exe", "--onefile", "--onedir",
+    "打包成exe", "打包为exe",
 ]
 
-_PACK_REMINDER = """\
+_PACK_HINT = """\
 [pyinstaller-packaging]
-如需打包，按 Q&A 流程：
-- packaging.json 存在 → 只问版本号 + 临时变更，其余静默沿用
-- 不存在 → 问 5 个必要问题（有默认值，回车跳过）
+- packaging.json 存在 → 只确认版本号 + 临时变更
+- 不存在 → 5 个默认值问题（回车跳过）
 - 构建成功后自动写回 JSON"""
-
-# 执行关键词 → 触发 wakita agent 调度提醒（绕过计划模式不可靠问题）
-_EXEC_KEYWORDS = [
-    "执行计划", "实现功能", "开始写代码", "按计划做",
-    "按 spec 实现", "开始实现", "动手吧", "写吧",
-    "implement", "开始执行",
-]
-
-_EXEC_REMINDER = """\
-[wakita agent 调度]
-检测到执行指令。请直接使用 Agent 工具派子智能体（不要依赖 ZCode 计划模式自动调度，它不可靠）：
-
-1. Agent(subagent_type="general-purpose", prompt="先派 wakita-scout 探索现有结构") — 先侦察
-2. Agent(subagent_type="general-purpose", prompt="再派 wakita-builder 按 spec 实现") — 后实现
-3. Agent(subagent_type="general-purpose", prompt="最后派 wakita-auditor 审查改动") — 审查
-
-每个 agent 的 prompt 中写明具体文件和改动要求。"""
 
 
 def _detect_context(prompt_text):
-    """根据 prompt 内容返回追加的场景提醒。"""
     if not prompt_text:
         return ""
-    text_lower = prompt_text.lower()
     for kw in _PACK_KEYWORDS:
-        if kw.lower() in text_lower:
-            return _PACK_REMINDER
-    for kw in _EXEC_KEYWORDS:
-        if kw.lower() in text_lower:
-            return _EXEC_REMINDER
+        if kw.lower() in prompt_text.lower():
+            return _PACK_HINT
     return ""
 
 
@@ -73,10 +48,8 @@ def main():
     except (json.JSONDecodeError, ValueError):
         sys.exit(0)
 
-    # 抽取用户 prompt 文本
     prompt = input_data.get("prompt", "") or input_data.get("text", "") or ""
 
-    # 拼接规范 + 场景提醒
     parts = [_NORMS]
     extra = _detect_context(prompt)
     if extra:
