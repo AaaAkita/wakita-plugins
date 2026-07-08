@@ -35,6 +35,23 @@ _PACK_REMINDER = """\
 - 不存在 → 问 5 个必要问题（有默认值，回车跳过）
 - 构建成功后自动写回 JSON"""
 
+# 执行关键词 → 触发 wakita agent 调度提醒（绕过计划模式不可靠问题）
+_EXEC_KEYWORDS = [
+    "执行计划", "实现功能", "开始写代码", "按计划做",
+    "按 spec 实现", "开始实现", "动手吧", "写吧",
+    "implement", "开始执行",
+]
+
+_EXEC_REMINDER = """\
+[wakita agent 调度]
+检测到执行指令。请直接使用 Agent 工具派子智能体（不要依赖 ZCode 计划模式自动调度，它不可靠）：
+
+1. Agent(subagent_type="general-purpose", prompt="先派 wakita-scout 探索现有结构") — 先侦察
+2. Agent(subagent_type="general-purpose", prompt="再派 wakita-builder 按 spec 实现") — 后实现
+3. Agent(subagent_type="general-purpose", prompt="最后派 wakita-auditor 审查改动") — 审查
+
+每个 agent 的 prompt 中写明具体文件和改动要求。"""
+
 
 def _detect_context(prompt_text):
     """根据 prompt 内容返回追加的场景提醒。"""
@@ -44,6 +61,9 @@ def _detect_context(prompt_text):
     for kw in _PACK_KEYWORDS:
         if kw.lower() in text_lower:
             return _PACK_REMINDER
+    for kw in _EXEC_KEYWORDS:
+        if kw.lower() in text_lower:
+            return _EXEC_REMINDER
     return ""
 
 
