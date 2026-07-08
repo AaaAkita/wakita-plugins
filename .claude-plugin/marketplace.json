@@ -5,12 +5,19 @@
   "owner": {
     "name": "AaaAkita"
   },
+  "interface": {
+    "displayName": "Wakita 插件仓库"
+  },
   "plugins": [
     {
       "name": "wakita-governance",
       "description": "管控插件：PreToolUse 拦截危险命令与保护文件、PostToolUse 写操作留痕与提交规范、UserPromptSubmit 注入工作规范、提供 audit/lock 命令、内置子智能体与 skill 集合。",
       "category": "security",
-      "source": "./plugins/wakita-governance"
+      "source": "./plugins/wakita-governance",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     }
   ]
 }
