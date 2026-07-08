@@ -39,7 +39,7 @@ skill-name/
 
 每个 SKILL.md 由以下部分组成：
 
-- **Frontmatter**（YAML）：包含 `name` 和 `description` 字段。这是 Codex 判断 skill 何时使用的唯一依据，因此清晰、全面地描述 skill 是什么、何时用非常重要。
+- **Frontmatter**（YAML）：包含 `name` 和 `description` 字段。这是 ZCode 判断 skill 何时使用的唯一依据，因此清晰、全面地描述 skill 是什么、何时用非常重要。
 - **正文**（Markdown）：使用 skill 的指令和指导。仅在 skill 触发后才加载（如果触发的话）。
 
 ---
@@ -65,27 +65,27 @@ skill-name/
 - **何时包含**：同一代码被反复重写，或需要确定性可靠性时。
 - **示例**：PDF 旋转任务的 `scripts/rotate_pdf.py`。
 - **好处**：token 高效、确定性强、可不加载进上下文直接执行。
-- **注意**：脚本仍可能需要 Codex 读取以做补丁或环境特定调整。
+- **注意**：脚本仍可能需要 ZCode 读取以做补丁或环境特定调整。
 
 ### References（`references/`）
 
-按需加载进上下文、用于指导 Codex 流程和思考的文档与参考材料。
+按需加载进上下文、用于指导 ZCode 流程和思考的文档与参考材料。
 
-- **何时包含**：Codex 工作时应参考的文档。
+- **何时包含**：ZCode 工作时应参考的文档。
 - **示例**：财务 schema 的 `references/finance.md`、公司 NDA 模板的 `references/mnda.md`、公司政策的 `references/policies.md`、API 规范的 `references/api_docs.md`。
 - **用例**：数据库 schema、API 文档、领域知识、公司政策、详细工作流指南。
-- **好处**：保持 SKILL.md 精简，仅当 Codex 判断需要时才加载。
+- **好处**：保持 SKILL.md 精简，仅当 ZCode 判断需要时才加载。
 - **最佳实践**：文件较大（>10k 词）时，在 SKILL.md 中包含 grep 搜索模式。
 - **避免重复**：信息应只存在于 SKILL.md 或 references 文件之一，不能两处都有。详细信息优先放 references 文件，除非确实是 skill 核心--这样能保持 SKILL.md 精简，同时让信息可被发现而不挤占上下文窗口。SKILL.md 只保留必要的程序化指令和工作流指导；详细参考材料、schema、示例移到 references 文件。
 
 ### Assets（`assets/`）
 
-不加载进上下文、而是用于 Codex 产出的输出中的文件。
+不加载进上下文、而是用于 ZCode 产出的输出中的文件。
 
 - **何时包含**：skill 需要会用在最终输出中的文件时。
 - **示例**：品牌资产的 `assets/logo.png`、PowerPoint 模板的 `assets/slides.pptx`、HTML/React 样板的 `assets/frontend-template/`、字体的 `assets/font.ttf`。
 - **用例**：模板、图片、图标、样板代码、字体、被复制或修改的样本文档。
-- **好处**：把输出资源与文档分离，使 Codex 能使用文件而不加载进上下文。
+- **好处**：把输出资源与文档分离，使 ZCode 能使用文件而不加载进上下文。
 
 ---
 
@@ -109,7 +109,7 @@ Skills 使用三层加载系统高效管理上下文：
 
 1. **元数据（name + description）** - 始终在上下文中（约 100 词）
 2. **SKILL.md 正文** - skill 触发时加载（<5k 词）
-3. **打包资源** - 按 Codex 需要加载（无限制，因为脚本可不读进上下文直接执行）
+3. **打包资源** - 按 ZCode 需要加载（无限制，因为脚本可不读进上下文直接执行）
 
 ### 渐进式披露模式
 
@@ -134,7 +134,7 @@ Extract text with pdfplumber:
 - **Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
 ```
 
-Codex 仅在需要时加载 FORMS.md、REFERENCE.md 或 EXAMPLES.md。
+ZCode 仅在需要时加载 FORMS.md、REFERENCE.md 或 EXAMPLES.md。
 
 #### 模式 2：按领域组织
 
@@ -150,7 +150,7 @@ bigquery-skill/
     └── marketing.md (campaigns, attribution)
 ```
 
-当用户问销售指标时，Codex 只读 sales.md。类似地，支持多框架或变体的 skill 按变体组织：
+当用户问销售指标时，ZCode 只读 sales.md。类似地，支持多框架或变体的 skill 按变体组织：
 
 ```
 cloud-deploy/
@@ -161,7 +161,7 @@ cloud-deploy/
     └── azure.md (Azure deployment patterns)
 ```
 
-当用户选 AWS 时，Codex 只读 aws.md。
+当用户选 AWS 时，ZCode 只读 aws.md。
 
 #### 模式 3：条件细节
 
@@ -182,12 +182,12 @@ For simple edits, modify the XML directly.
 **For OOXML details**: See [OOXML.md](OOXML.md)
 ```
 
-Codex 仅在用户需要这些功能时读 REDLINING.md 或 OOXML.md。
+ZCode 仅在用户需要这些功能时读 REDLINING.md 或 OOXML.md。
 
 ### 重要准则
 
 - **避免深层嵌套引用** - references 保持离 SKILL.md 一层深。所有参考文件应直接从 SKILL.md 链接。
-- **为较长的参考文件建立结构** - 超过 100 行的文件，顶部放目录，让 Codex 预览时能看到全貌。
+- **为较长的参考文件建立结构** - 超过 100 行的文件，顶部放目录，让 ZCode 预览时能看到全貌。
 
 ---
 

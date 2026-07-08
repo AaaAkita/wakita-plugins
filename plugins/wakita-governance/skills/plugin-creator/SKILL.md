@@ -1,6 +1,6 @@
 ---
 name: plugin-creator
-description: 为 Codex 创建并脚手架生成插件目录，包含必需的 `.codex-plugin/plugin.json`、可选的插件文件夹/文件、有效的 manifest 默认值，以及默认的个人 marketplace 条目。当 Codex 需要创建新个人插件、添加可选插件结构、生成或更新 marketplace 条目以控制插件排序与可用性元数据，或在开发期间用 CLI 驱动的 cachebuster 与重装流程更新现有本地插件时使用。
+description: 为 ZCode 创建并脚手架生成插件目录，包含必需的 `.claude-plugin/plugin.json`、可选的插件文件夹/文件、有效的 manifest 默认值，以及默认的个人 marketplace 条目。当 ZCode 需要创建新个人插件、添加可选插件结构、生成或更新 marketplace 条目以控制插件排序与可用性元数据，或在开发期间用 CLI 驱动的 cachebuster 与重装流程更新现有本地插件时使用。
 ---
 
 # Plugin Creator
@@ -17,10 +17,10 @@ description: 为 Codex 创建并脚手架生成插件目录，包含必需的 `.
 python3 scripts/create_basic_plugin.py <plugin-name>
 ```
 
-2. 当请求给出具体元数据时，编辑 `<plugin-path>/.codex-plugin/plugin.json`。
+2. 当请求给出具体元数据时，编辑 `<plugin-path>/.claude-plugin/plugin.json`。
    脚手架以有效默认值起步，且不得包含 `[TODO: ...]` 占位符。
 
-3. 当插件应出现在 Codex UI 排序中时，生成或更新个人 marketplace 条目：
+3. 当插件应出现在 ZCode 界面 排序中时，生成或更新个人 marketplace 条目：
 
 ```bash
 # 个人 marketplace 条目默认在 `~/.agents/plugins/marketplace.json`。
@@ -77,7 +77,7 @@ python3 scripts/update_plugin_cachebuster.py <plugin-path>
   `~/.agents/plugins/marketplace.json` 的个人 marketplace 文件，插件通常存储在
   `~/plugins/<plugin-name>/`。
 - 在 `/<parent-plugin-directory>/<plugin-name>/` 创建插件根目录。
-- 始终创建 `/<parent-plugin-directory>/<plugin-name>/.codex-plugin/plugin.json`。
+- 始终创建 `/<parent-plugin-directory>/<plugin-name>/.claude-plugin/plugin.json`。
 - 用 ingestion 路径接受的已验证 schema 形状填充 manifest。
 - 当设置 `--with-marketplace` 时创建或更新 `~/.agents/plugins/marketplace.json`。
   - 若 marketplace 文件尚不存在，在添加第一个插件条目之前种子化个人 marketplace 根。
@@ -103,12 +103,12 @@ python3 scripts/update_plugin_cachebuster.py <plugin-path>
   名称已被占用且需要种子化不同的新 marketplace 文件时使用。
 - 不要用 `--marketplace-name` 就地重命名现有 marketplace 文件。若文件
   已存在，其顶层 `name` 必须已匹配。
-- 若用户指定不同的 marketplace 路径，将该 marketplace 视为需要通过 `codex plugin marketplace add` 显式安装。
+- 若用户指定不同的 marketplace 路径，将该 marketplace 视为需要通过 `zcode plugin marketplace add` 显式安装。
 - 当需要从任何
   `marketplace.json` 文件获取 marketplace 名称时，优先使用 `scripts/read_marketplace_name.py`。无参数时读取默认个人 marketplace；带显式路径时也适用于仓库/团队 marketplace。
 - 在任一位置，生成的 source 路径保持 `./plugins/<plugin-name>`。
 - Marketplace 根元数据支持顶层 `name` 加可选的 `interface.displayName`。
-- 将 `plugins[]` 中的插件顺序视为 Codex 中的渲染顺序。除非用户明确要求重排列表，否则追加新条目。
+- 将 `plugins[]` 中的插件顺序视为 ZCode 中的渲染顺序。除非用户明确要求重排列表，否则追加新条目。
 - `displayName` 属于 marketplace `interface` 对象内部，而非单个 `plugins[]` 条目。
 - 每个生成的 marketplace 条目必须包含以下全部：
   - `policy.installation`
@@ -174,7 +174,7 @@ python3 scripts/update_plugin_cachebuster.py <plugin-path>
 ## 必需行为
 
 - 外层文件夹名和 `plugin.json` 的 `"name"` 始终是相同的规范化插件名。
-- 不要移除必需结构；保持 `.codex-plugin/plugin.json` 存在。
+- 不要移除必需结构；保持 `.claude-plugin/plugin.json` 存在。
 - 不要在插件 manifest 中留 `[TODO: ...]` 占位符。
 - 除非伴随文件实际已创建，否则将 `apps` 和 `mcpServers` 排除在 `plugin.json` 之外。
 - 省略验证会拒绝的不支持的插件 manifest 字段，包括 `hooks`。
@@ -185,17 +185,17 @@ python3 scripts/update_plugin_cachebuster.py <plugin-path>
 - 保持 marketplace `source.path` 相对于所选 marketplace 根为 `./plugins/<plugin-name>`。
 - 仅当创建的 marketplace 文件名称不应为
   `personal`（因该名称已被占用或在别处安装）时才使用 `--marketplace-name`。
-- 若 Codex 需要批准才能写入 marketplace 文件，在继续之前请求该批准。若用户偏好自己运行写入，提供确切的脚手架命令，然后从验证或后续插件编辑继续，而非让工作流含糊不清。
+- 若 ZCode 需要批准才能写入 marketplace 文件，在继续之前请求该批准。若用户偏好自己运行写入，提供确切的脚手架命令，然后从验证或后续插件编辑继续，而非让工作流含糊不清。
 - 对于开发期间更新现有本地插件，不要手编 marketplace config
   或 `marketplace.json`。使用
   `references/installing-and-updating.md` 和 `scripts/update_plugin_cachebuster.py` 中记录的更新流程。
-- 不要为默认个人 marketplace 流程告知用户运行 `codex plugin marketplace add`。该命令用于显式非默认 marketplace 配置，而非标准 `~/.agents/plugins/marketplace.json` 路径。
-- 若用户提供了非默认 `--marketplace-path`，在给出重装说明之前确保该 marketplace 已安装。当该显式 marketplace 尚未配置时，使用 `codex plugin marketplace add <path-to-marketplace-root>`。
-- 当工作流创建或更新了基于 marketplace 的插件时，以简短的 Codex app 交接结束最终面向用户的响应。说 `To view this in the Codex app:` 并将 `View <normalized plugin name>` 和 `Share <normalized plugin name>` 写为 Markdown 链接，而非原始 URL 或代码 span。
-- View deeplink 使用 `codex://plugins/<normalized plugin name>?marketplacePath=<absolute marketplace.json path>`。
+- 不要为默认个人 marketplace 流程告知用户运行 `zcode plugin marketplace add`。该命令用于显式非默认 marketplace 配置，而非标准 `~/.agents/plugins/marketplace.json` 路径。
+- 若用户提供了非默认 `--marketplace-path`，在给出重装说明之前确保该 marketplace 已安装。当该显式 marketplace 尚未配置时，使用 `zcode plugin marketplace add <path-to-marketplace-root>`。
+- 当工作流创建或更新了基于 marketplace 的插件时，以简短的 ZCode 应用 交接结束最终面向用户的响应。说 `To view this in the ZCode 应用:` 并将 `View <normalized plugin name>` 和 `Share <normalized plugin name>` 写为 Markdown 链接，而非原始 URL 或代码 span。
+- View deeplink 使用 `zcode://plugins/<normalized plugin name>?marketplacePath=<absolute marketplace.json path>`。
 - Share deeplink 使用相同 URL 加 `&mode=share`。
 - 用脚手架插件的真实规范化插件名和绝对 `marketplace.json` 路径替换占位符。需要时对路径段和查询值进行 URL 编码。
-- 不要向这些 deeplink 添加 `pluginName` 或 `hostId` 查询参数。Codex 在用户点击链接后推导两者。
+- 不要向这些 deeplink 添加 `pluginName` 或 `hostId` 查询参数。ZCode 在用户点击链接后推导两者。
 - 未创建或更新 marketplace 条目时，不要输出 `View <normalized plugin name>` 或 `Share <normalized plugin name>` 链接。
 
 ## 精确规范示例参考
