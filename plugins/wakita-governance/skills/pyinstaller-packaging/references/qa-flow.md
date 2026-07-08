@@ -1,137 +1,96 @@
-# Q&A 流程详述
+# Q&A 流程
 
-执行打包任务时按以下流程与用户交互，兼顾复用与灵活性。
-
-## 第一步：加载现有配置
-
-检查项目根目录是否已有 `packaging.json`：
+## 决策树
 
 ```
-→ 存在 → 加载并展示摘要，逐项确认是否仍正确
-→ 不存在 → 进入新建流程
+用户说"打包"
+  │
+  ├─ packaging.json 存在？──是──→ 展示一行摘要 → 只问：版本号？有临时变更吗？
+  │                                    │                 ↓
+  └─ 不存在 ──→ 新建：问 5 个必要问题（有默认值，回车跳过） ←──┘
+                                                    │
+                                              拼装命令 → 构建 → 保存 JSON
 ```
 
-### 加载后展示示例
+## 首次打包（新建 packaging.json）
+
+只问 **5 个必要问题**，其余字段用默认值，用户回车即接受：
+
+| # | 问题 | 默认值 | 备注 |
+|---|------|--------|------|
+| 1 | 软件名？ | 从入口文件名推断 | `app.py` → `"App"` |
+| 2 | 入口文件？ | `"main.py"` | 如不存在则要求指定 |
+| 3 | 版本号？ | — | 必填，无默认值 |
+| 4 | 打包模式？ | `"onefile"` | onefile（单文件）/ onedir（目录） |
+| 5 | 有数据文件要打包吗？ | 无 | 有则逐项添加 `源→目标`，空行结束 |
+
+**高级字段不主动问**（图标、公司名、隐式 import、UPX 等），用户明确提到时再追加到 JSON。优先让简单场景的用户 3 秒钟跳过。
+
+## 后续打包（packaging.json 已存在）
+
+**只问 2 个问题**，其余字段静默沿用：
+
+1. **版本号？** — 必问，每次发版会变
+2. **有临时变更吗？** — 如临时切 onedir 调试、新增依赖、加了数据文件
+
+展示**一行摘要**让用户有个概念，不逐字段确认：
 
 ```
-已加载 packaging.json：
-  软件名：MyApp
-  入口文件：main.py
-  公司主体：xxx 公司
-  打包模式：单文件 (--onefile)
-  图标：assets/icon.ico
-  显示控制台：是
-  数据文件：assets → assets, config.json → .
-  隐式 import：无
-  排除模块：tkinter, unittest, email, html
-  UPX 压缩：否
-
-这些信息是否需要更新？[是/否]
+→ packaging.json: MyApp_v1.2.0 | onefile | main.py | 数据: assets/
+→ 版本号？[1.2.0 →  ]
+→ 临时变更？[无]
 ```
 
-## 第二步：新建 / 更新配置
+## 轻量模式
 
-### 必须确认（每次打包）
+以下条件**全部满足**时，按轻量模式处理——跳过数据文件/隐式 import 等高级问题：
 
-| 问题 | JSON 字段 | 说明 |
-|------|----------|------|
-| 版本号 | `app.version` | 每次发版必变，不存历史值 |
-| 本次是否有临时变更 | — | 如临时新增依赖、额外数据文件、临时切 --onedir 调试 |
+- 无 `--add-data` 需求
+- 无隐式 import
+- 无图标文件
+- 无 UPX
 
-### 新建时询问（存 JSON 复用）
+轻量模式下首次也只问 3 个问题（软件名 + 入口 + 版本号），其余全默认。
 
-按顺序逐项确认，用户可直接回车接受默认值（括号内）：
+## 拼装命令
 
-1. 软件名 `[从入口文件名推断]`
-2. 入口文件 `[main.py]`
-3. 公司名称
-4. 打包模式 `[onefile]` — onefile / onedir
-5. 图标路径 `[assets/icon.ico]` — 无则跳过
-6. 是否显示控制台窗口 `[true]` — GUI 程序选 false
-7. 数据文件清单 — 逐项添加，空行结束
-8. 隐式 import 清单 — 逐项添加，空行结束
-9. 排除模块 — 默认建议 `["tkinter", "unittest", "email", "html"]`
-10. 是否启用 UPX 压缩 `[false]`
-
-## 第三步：拼装命令
-
-从 JSON 提取参数，拼装 `pyinstaller` 命令行：
+从 `packaging.json` 提取参数，拼装为 `pyinstaller` 命令行。
 
 ```python
-import json
+import json, subprocess
 
 with open("packaging.json", "r", encoding="utf-8") as f:
     cfg = json.load(f)
 
-cmd = ["pyinstaller"]
+cmd = ["pyinstaller", f"--{cfg['packaging']['mode']}", "--clean"]
 
-# 模式
-mode = cfg["packaging"]["mode"]
-cmd.append(f"--{mode}")
+# 名称含版本号
+cmd += ["--name", f"{cfg['app']['name']}_v{cfg['app']['version']}"]
 
-# 名称 + 版本号
-name_ver = f"{cfg['app']['name']}_v{cfg['app']['version']}"
-cmd += ["--name", name_ver]
+# 图标（可选）
+if cfg["packaging"].get("icon"):
+    cmd += ["--icon", cfg["packaging"]["icon"]]
 
-# 清理
-cmd.append("--clean")
-
-# 图标
-icon = cfg["packaging"].get("icon")
-if icon:
-    cmd += ["--icon", icon]
-
-# 控制台
+# 控制台（可选）
 if not cfg["packaging"].get("console", True):
     cmd.append("--noconsole")
 
 # 数据文件
-for dd in cfg["resources"].get("data_dirs", []):
-    cmd += ["--add-data", f"{dd['src']};{dd['dest']}"]
+for d in cfg["resources"].get("data_dirs", []):
+    cmd += ["--add-data", f"{d['src']};{d['dest']}"]
 
 # 隐式 import
 for hi in cfg["resources"].get("hidden_imports", []):
     cmd += ["--hidden-import", hi]
 
-# 排除
+# 排除模块
 for ex in cfg["resources"].get("excludes", []):
     cmd += ["--exclude-module", ex]
 
-# 入口
 cmd.append(cfg["app"]["entry"])
-
-# 执行
-print(" ".join(cmd))
+subprocess.run(cmd)
 ```
 
-## 第四步：保存配置
+## 保存配置
 
-构建成功后，将本次确认的信息写回 `packaging.json`（版本号保留本次值作为下次的参考，但下次仍然会重新询问）。
-
-## 交互示例
-
-```
-用户：帮我打包
-
-AI：检测到 packaging.json，加载中...
-
-已加载配置：
-  软件名：MoneyFlyToMe
-  入口：app.py
-  版本号：(待确认)
-  模式：单文件
-  ...
-
-请确认版本号：[1.2.0]
-> 1.3.0
-
-是否有本次临时变更？[无]
-> 无
-
-配置确认完毕，执行构建：
-  pyinstaller --onefile --clean --name MoneyFlyToMe_v1.3.0 ...
-
-构建完成 ✓
-  → dist/MoneyFlyToMe_v1.3.0.exe (45MB)
-  → packaging.json 已更新版本号为 1.3.0
-```
+构建成功后写回 `packaging.json`（保留用户追加的高级字段，只更新版本号）。构建失败不写回。

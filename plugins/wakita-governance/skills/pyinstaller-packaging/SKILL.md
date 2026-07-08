@@ -153,24 +153,14 @@ pyinstaller --onefile --clean main.py
 
 ## Q&A 机制与项目配置
 
-为避免每次打包重复询问相同的项目信息，使用 `packaging.json` 持久化静态配置。详见 `references/qa-flow.md`。
+`packaging.json` 持久化静态信息，避免重复询问。详流程见 `references/qa-flow.md`，模板见 `references/project-config-template.json`。
 
-### 配置策略
+### 核心规则
 
-| 存储类型 | 内容 | 举例 |
-|---------|------|------|
-| **存 JSON（复用）** | 软件名、公司主体、入口文件、图标、打包模式、数据文件、隐式 import | `"name": "MyApp"` |
-| **每次询问** | 版本号、本次特殊需求、是否临时切换模式 | `"version": "2.1.0"` |
-
-### 流程概要
-
-1. 检查项目根目录是否有 `packaging.json`
-2. 有 → 加载并确认各字段是否仍正确，过时的更新
-3. 无 → 逐项询问后生成 `packaging.json`
-4. 始终询问版本号（每次发版会变）
-5. 从 JSON 拼装 `pyinstaller` 命令，执行构建
-
-JSON 模板见 `references/project-config-template.json`。
+- **首次打包**：问 5 个必要问题（软件名/入口/版本号/模式/数据文件），其余默认，回车跳过
+- **后续打包**：只问版本号 + 有无临时变更，其余字段静默沿用
+- **轻量项目**：无数据文件/隐式 import/图标时自动跳过对应问题
+- **构建成功**：写回 JSON（只更新版本号）；失败不写回
 
 ## 触发场景
 
@@ -181,12 +171,8 @@ JSON 模板见 `references/project-config-template.json`。
 
 ## 执行步骤
 
-1. **加载/生成配置**：读取或新建 `packaging.json`（按 Q&A 流程逐项确认）
-2. **确认版本号**：每次必问，填入 JSON
-3. **确认依赖**：检查 `requirements.txt`，标记隐式 import 库
-4. **确认数据文件**：校验 `--add-data` 清单，代码里 `resource_path()` 适配就位
-5. **选择模式**：调试用 `--onedir`，分发用 `--onefile`（可临时覆盖 JSON 默认值）
-6. **构建**：从 JSON 拼装参数，执行 `pyinstaller`
-7. **验证**：在干净环境（或 dist/ 目录）运行 .exe，确认所有功能正常
-8. **保存配置**：将本次确认的变更写回 `packaging.json`
-9. **打包分发**：zip 压缩 dist/ 目录，命名含版本号
+1. **加载配置**：packaging.json 存在 → 一行摘要 + 只问版本号；不存在 → 5 个默认值问题
+2. **确认变更**：问"有临时变更吗"，收集本次特殊需求
+3. **拼装命令**：从 JSON 提取参数，执行 `pyinstaller`
+4. **验证**：在 dist/ 目录运行 .exe，确认功能正常
+5. **保存并分发**：写回 JSON → zip 压缩命名含版本号
