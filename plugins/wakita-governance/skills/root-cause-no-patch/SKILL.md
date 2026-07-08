@@ -1,6 +1,6 @@
 ---
 name: root-cause-no-patch
-description: 修 bug 时必须定位根因并根治，禁止用补丁/临时方案/降级容忍掩盖问题。当用户说"禁止补丁""修到正常为止""不要临时方案"或遇到反复报错时触发。
+description: 调 bug/样式/布局时必须定位根因并根治，禁止用补丁/临时方案/降级容忍掩盖问题。涵盖后端异常、构建失败、容器崩溃、CSS 视觉调参等场景。当用户说"禁止补丁""修到正常为止""不要临时方案"或遇到反复报错时触发。
 metadata:
   type: feedback
   short-description: 根因优先，禁止补丁式修复
@@ -91,6 +91,17 @@ metadata:
 
 **补丁**：加大超时、跳过 chown → 治标，每次构建仍慢
 **根因**：加 .dockerignore 排除 venv → COPY 从卡死降到 2.5s
+
+## 真实案例：CSS class 无效迭代
+
+```
+现象：`px-6`、`px-8` 不生效，padding-left/right 始终 0px
+  → 为什么？class 不存在（项目用手写工具集，不是 Tailwind）
+    → 根因：未验证 class 是否定义就开始迭代调值
+```
+
+**补丁**：换 `px-4`、`px-10`、`px-12` → 全部无效，因为 class 根本不存在
+**根因**：首次无效时 grep 样式表确认 class 存在 → 发现不存在 → 改用自定义 style，一次生效
 
 ## 禁止清单
 
