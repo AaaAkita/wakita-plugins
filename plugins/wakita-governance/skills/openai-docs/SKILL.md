@@ -1,167 +1,167 @@
 ---
 name: "openai-docs"
-description: "Use when the user asks how to build with OpenAI products or APIs, asks about Codex itself or choosing Codex surfaces, needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; use OpenAI docs MCP tools for non-Codex docs questions, use the Codex manual helper first for broad Codex self-knowledge, and restrict fallback browsing to official OpenAI domains."
+description: "当用户询问如何基于 OpenAI 产品或 API 进行构建、询问 Codex 本身或选择 Codex 各产品形态、需要带引用的最新官方文档、为某个用例选择最新模型、或需要模型升级与 prompt 升级指引时使用；非 Codex 文档问题使用 OpenAI docs MCP 工具；广泛的 Codex 自身知识优先使用 Codex manual 辅助工具；回退浏览仅限 OpenAI 官方域名。"
 ---
 
 
 # OpenAI Docs
 
-Provide authoritative, current guidance from OpenAI developer docs using the developers.openai.com MCP server. "Docs MCP" means `mcp__openaiDeveloperDocs__search_openai_docs` and `mcp__openaiDeveloperDocs__fetch_openai_doc`; for API reference, schema, parameter, or required-field questions, also use `mcp__openaiDeveloperDocs__get_openapi_spec` when available. Official-domain web search is fallback after those tools are unavailable or unhelpful. Broad Codex questions use the manual helper before Docs MCP. This skill also owns model selection, API model migration, and prompt-upgrade guidance.
+基于 developers.openai.com MCP 服务器，提供来自 OpenAI 开发者文档的权威、最新指引。"Docs MCP" 指 `mcp__openaiDeveloperDocs__search_openai_docs` 与 `mcp__openaiDeveloperDocs__fetch_openai_doc`；对于 API 参考、schema、参数或必填字段相关问题，在可用时还需使用 `mcp__openaiDeveloperDocs__get_openapi_spec`。当上述工具不可用或无帮助时，回退到官方域名 web 搜索作为兜底。广泛的 Codex 问题优先使用 manual 辅助工具，再走 Docs MCP。本 skill 还负责模型选择、API 模型迁移与 prompt 升级指引。
 
-## API Key Setup
+## API Key 设置
 
-For requests to build, run, configure, debug, or implement an API-backed app, script, CLI, generator, or tool, use `openai-platform-api-key` first when available. After that credential gate is resolved, return here for current docs as needed.
+对于构建、运行、配置、调试或实现基于 API 的应用、脚本、CLI、生成器或工具的请求，在可用时优先使用 `openai-platform-api-key`。该凭据门禁解决后，再按需回到此处获取最新文档。
 
-Use this skill directly for docs-only questions, citations, model/API guidance, conceptual explanations, and examples that do not require building or running an API-backed artifact.
+对于纯文档问题、引用、模型/API 指引、概念解释以及无需构建或运行基于 API 产物的示例，直接使用本 skill。
 
-## Workflow Configuration
+## 工作流配置
 
-### Source Priority
+### 来源优先级
 
-- For Codex self-knowledge, use the Codex source route below; it owns when to use the manual helper, Docs MCP, or bounded uncertainty.
-- For non-Codex OpenAI docs questions, use `mcp__openaiDeveloperDocs__search_openai_docs` to find the most relevant doc pages.
-- For non-Codex OpenAI docs questions, fetch the relevant page with `mcp__openaiDeveloperDocs__fetch_openai_doc` before answering. If search is noisy, run a narrower Docs MCP search; when any plausible official OpenAI docs URL is known or found, try fetching that URL through Docs MCP before relying on web-search content.
-- For API reference, schema, parameter, or required-field questions, use `mcp__openaiDeveloperDocs__get_openapi_spec` when available to verify the API shape alongside the relevant guide or reference page.
-- Use `mcp__openaiDeveloperDocs__list_openai_docs` only when you need to browse or discover non-Codex pages without a clear query.
-- For model-selection, "latest model", or default-model questions, fetch `https://developers.openai.com/api/docs/guides/latest-model.md` first. If that is unavailable, load `references/latest-model.md`.
-- For model upgrades or prompt upgrades, run `node scripts/resolve-latest-model-info.js` only when the target is latest/current/default or otherwise unspecified; otherwise preserve the explicitly requested target.
-- Preserve explicit target requests: if the user names a target model like "migrate to GPT-5.4", keep that requested target even if `latest-model.md` names a newer model. Mention newer guidance only as optional.
-- If current remote guidance is needed, fetch both the returned migration and prompting guide URLs directly. If direct fetch fails, use MCP/search fallback; if that also fails, use bundled fallback references and disclose the fallback.
+- 对于 Codex 自身知识，使用下文的 Codex 来源路线；它决定何时使用 manual 辅助工具、Docs MCP 或有界不确定性（bounded uncertainty）。
+- 对于非 Codex 的 OpenAI 文档问题，使用 `mcp__openaiDeveloperDocs__search_openai_docs` 查找最相关的文档页面。
+- 对于非 Codex 的 OpenAI 文档问题，回答前用 `mcp__openaiDeveloperDocs__fetch_openai_doc` 拉取相关页面。若搜索结果噪声大，运行更窄的 Docs MCP 搜索；当已知或找到任何貌似官方 OpenAI 文档 URL 时，优先通过 Docs MCP 尝试拉取该 URL，再依赖 web 搜索内容。
+- 对于 API 参考、schema、参数或必填字段问题，在可用时使用 `mcp__openaiDeveloperDocs__get_openapi_spec` 在相关 guide 或 reference 页面旁验证 API 形状。
+- 仅当需要无明确查询地浏览或发现非 Codex 页面时，才使用 `mcp__openaiDeveloperDocs__list_openai_docs`。
+- 对于模型选择、"latest model" 或默认模型问题，优先拉取 `https://developers.openai.com/api/docs/guides/latest-model.md`。若不可用，加载 `references/latest-model.md`。
+- 对于模型升级或 prompt 升级，仅当目标为 latest/current/default 或其他未明确指定时，运行 `node scripts/resolve-latest-model-info.js`；否则保留显式指定的目标。
+- 保留显式目标请求：若用户点名某个目标模型如 "migrate to GPT-5.4"，即使 `latest-model.md` 列出了更新的模型，也保留该请求目标。仅将更新指引作为可选项提及。
+- 若需要当前远程指引，直接拉取返回的迁移与 prompting guide 两个 URL。若直接拉取失败，使用 MCP/搜索回退；若仍失败，使用内置回退参考并说明已使用回退。
 
-## OpenAI product snapshots
+## OpenAI 产品快照
 
-1. Apps SDK: Build ChatGPT apps by providing a web component UI and an MCP server that exposes your app's tools to ChatGPT.
-2. Responses API: A unified endpoint designed for stateful, multimodal, tool-using interactions in agentic workflows.
-3. Chat Completions API: Generate a model response from a list of messages comprising a conversation.
-4. Codex: OpenAI's coding agent for software development that can write, understand, review, and debug code.
-5. gpt-oss: Open-weight OpenAI reasoning models (gpt-oss-120b and gpt-oss-20b) released under the Apache 2.0 license.
-6. Realtime API: Build low-latency, multimodal experiences including natural speech-to-speech conversations.
-7. Agents SDK: A toolkit for building agentic apps where a model can use tools and context, hand off to other agents, stream partial results, and keep a full trace.
+1. Apps SDK：通过提供 web component UI 和向 ChatGPT 暴露应用工具的 MCP server 来构建 ChatGPT 应用。
+2. Responses API：为 agentic 工作流中有状态、多模态、使用工具的交互设计的统一端点。
+3. Chat Completions API：从构成一段对话的消息列表生成模型响应。
+4. Codex：OpenAI 面向软件开发的编码 agent，能编写、理解、审查和调试代码。
+5. gpt-oss：OpenAI 在 Apache 2.0 许可下发布的开放权重推理模型（gpt-oss-120b 和 gpt-oss-20b）。
+6. Realtime API：构建低延迟、多模态体验，包括自然的语音到语音对话。
+7. Agents SDK：用于构建 agentic 应用的工具包，模型可使用工具和上下文、交接给其他 agent、流式返回部分结果并保留完整 trace。
 
-## Codex self-knowledge
+## Codex 自身知识
 
-Use this path for questions about Codex itself: configuring, extending, operating, troubleshooting, local state, product surfaces, or where Codex behavior should live. A codebase merely mentioning a plugin, skill, hook, MCP server, browser, or automation is not enough. For generic software tasks, answer the software task directly; if asked whether Codex self-knowledge applies, answer that meta question briefly and continue the requested artifact.
+对于关于 Codex 本身的问题使用此路径：配置、扩展、运行、排障、本地状态、产品形态、或 Codex 行为应归属何处。代码库仅提及某个插件、skill、hook、MCP server、浏览器或自动化不足以触发本路径。对于通用软件任务，直接回答该软件任务；若被问及 Codex 自身知识是否适用，简要回答该元问题后继续完成请求的产物。
 
-### Source Route
+### 来源路线
 
-The Codex manual is the first source for broad Codex synthesis. Treat the manual and Docs MCP as different lanes, not interchangeable official-doc sources. For published-user Codex product answers, the source route is complete: the manual, Docs MCP when this route calls for it, official OpenAI web fallback, and callable capabilities surfaced in the current session when the question is about that capability. Knowledge bases outside developers.openai.com are outside this route for public product answers.
+Codex manual 是广泛 Codex 综合问题的第一来源。将 manual 与 Docs MCP 视为不同通道，而非可互换的官方文档来源。对于已发布用户层面的 Codex 产品回答，来源路线是完整的：manual、本路线需要的 Docs MCP、官方 OpenAI web 回退、以及当问题涉及某项能力时当前会话中已呈现的可调用能力。developers.openai.com 之外的知识库不在公开产品回答的本路线内。
 
-For broad Codex behavior, setup, customization, skills, plugins, MCP, hooks, `AGENTS.md`, automations, surfaces, local state, or system-map questions:
+对于广泛的 Codex 行为、设置、定制、skills、plugins、MCP、hooks、`AGENTS.md`、automations、产品形态、本地状态或系统图问题：
 
-1. Reuse a same-thread manual and outline path when it is still fresh.
-2. Otherwise run the skill-local helper first in normal writable sessions. Skip it without trying only when the session is explicitly read-only, shell execution is unavailable, or visible policy shows no allowed temp cache.
-3. By default, the helper chooses the first usable temp cache dir in this order: `$TMPDIR/openai-docs-cache`, `%TEMP%\openai-docs-cache`, `%TMP%\openai-docs-cache`, `/private/tmp/openai-docs-cache`, then `/tmp/openai-docs-cache`. Workspace-only write access is not enough for this temp cache.
-4. Run the helper directly unless you need to override the cache dir. The helper falls back to `curl` when native `fetch` is unavailable or when proxy env vars are present, so no shell-specific proxy prefix is required. Resolve `<skill-dir>` to this skill's actual directory; in copied local eval workdirs this is usually `.codex/skills/openai-docs`:
+1. 当同一线程的 manual 与 outline 路径仍然新鲜时，复用它们。
+2. 否则在普通可写会话中优先运行 skill 本地辅助工具。仅当会话明确只读、shell 执行不可用、或可见策略显示无允许的临时缓存时，才跳过它而不尝试。
+3. 默认情况下，辅助工具按以下顺序选择第一个可用的临时缓存目录：`$TMPDIR/openai-docs-cache`、`%TEMP%\openai-docs-cache`、`%TMP%\openai-docs-cache`、`/private/tmp/openai-docs-cache`，然后 `/tmp/openai-docs-cache`。仅工作区可写权限不足以满足此临时缓存需求。
+4. 直接运行辅助工具，除非需要覆盖缓存目录。当原生 `fetch` 不可用或存在代理环境变量时，辅助工具回退到 `curl`，因此不需要 shell 特定的代理前缀。将 `<skill-dir>` 解析为本 skill 的实际目录；在复制的本地 eval 工作目录中通常是 `.codex/skills/openai-docs`：
 
 ```bash
 node <skill-dir>/scripts/fetch-codex-manual.mjs
 ```
 
-If you need to override the cache dir, pass `--cache-dir <cache-dir>`. On Windows, the helper checks `%TEMP%` and `%TMP%` automatically; in PowerShell, `$env:TEMP\\openai-docs-cache` is a typical explicit override.
+如需覆盖缓存目录，传入 `--cache-dir <cache-dir>`。在 Windows 上，辅助工具会自动检查 `%TEMP%` 和 `%TMP%`；在 PowerShell 中，`$env:TEMP\\openai-docs-cache` 是典型的显式覆盖。
 
-Treat helper availability as established by explicit read-only/no-shell policy or an actual command result. A guessed sandbox or guessed helper failure is not enough to switch to Docs MCP or web lookup; after an actual helper command failure, continue to the narrowest official next source below.
+将辅助工具的可用性视为由显式只读/无 shell 策略或实际命令结果确立。猜测的沙箱或猜测的辅助工具失败不足以切换到 Docs MCP 或 web 查找；在实际辅助工具命令失败后，继续到下文最窄的官方下一来源。
 
-The helper verifies freshness, writes `codex-manual.md`, and emits `codex-manual.outline.md`. The outline maps source pages and headings to line ranges; use it to choose the relevant manual section, then read or search targeted manual sections for Codex product facts. Use the skill directory to locate and run the helper; after the helper succeeds, use the returned manual and outline paths as the search scope for Codex product facts and term coverage checks.
+辅助工具验证新鲜度，写入 `codex-manual.md`，并输出 `codex-manual.outline.md`。outline 将来源页面和标题映射到行范围；用它选择相关 manual 章节，然后读取或搜索目标 manual 章节以获取 Codex 产品事实。使用 skill 目录定位并运行辅助工具；辅助工具成功后，使用返回的 manual 和 outline 路径作为 Codex 产品事实与术语覆盖检查的搜索范围。
 
-Reuse the same-thread manual and outline paths for follow-up Codex questions. Refresh first when the manual was fetched more than about a day ago, the path is unusable, the path came from another thread or uncertain provenance, or likely-current information is missing and staleness is plausible.
+对于后续 Codex 问题，复用同一线程的 manual 和 outline 路径。当 manual 拉取超过约一天、路径不可用、路径来自其他线程或来源不确定、或可能缺失当前信息且陈旧可信时，先刷新。
 
-For questions about whether the manual is current enough to rely on now, run the helper when temp caching is allowed and base the answer on its returned status, manual path, and outline path.
+对于 manual 是否足够新鲜可现在依赖的问题，在允许临时缓存时运行辅助工具，并基于其返回状态、manual 路径和 outline 路径作答。
 
-If the manual resolves a Codex claim, answer from it and stop expanding sources for that claim; continue the user's broader task if the docs lookup was only one dependency. Manual source pages and known anchors are enough citation support for manual-covered material.
+若 manual 解决了某个 Codex 声明，从其作答并停止为该声明扩展来源；若文档查找只是一个依赖项，则继续用户更广泛的任务。manual 来源页面与已知锚点对 manual 覆盖的材料足够作为引用支撑。
 
-If the helper is skipped because the session is read-only, has no shell execution, or has no allowed temp cache, the next source is Docs MCP: call `mcp__openaiDeveloperDocs__search_openai_docs`, then `mcp__openaiDeveloperDocs__fetch_openai_doc` for a relevant hit before any web fallback.
+若因会话只读、无 shell 执行或无允许的临时缓存而跳过辅助工具，下一来源是 Docs MCP：在任何 web 回退之前，调用 `mcp__openaiDeveloperDocs__search_openai_docs`，然后对相关命中调用 `mcp__openaiDeveloperDocs__fetch_openai_doc`。
 
-If a user names a Codex term or mode that a fresh manual does not use, search the manual for obvious adjacent concepts, then answer that the exact term is not documented and use the closest documented terminology. If the prompt asks how that term maps to Codex behavior, resolve the mapping from adjacent manual sections. If the exact term remains material or likely current after that manual pass, use one narrow Docs MCP search/fetch before bounded uncertainty; otherwise, the source lookup for that terminology or mapping claim is complete.
+若用户点名某个新鲜 manual 未使用的 Codex 术语或模式，在 manual 中搜索明显的相邻概念，然后回答该确切术语未文档化并使用最接近的文档化术语。若 prompt 询问该术语如何映射到 Codex 行为，从相邻 manual 章节解析该映射。若该确切术语在那次 manual 过扫后仍然实质性或可能当前，在有界不确定性之前使用一次窄 Docs MCP 搜索/拉取；否则该术语或映射声明的来源查找完成。
 
-Use the narrowest official next source only when the manual is unavailable, the helper fails, temp caching is not allowed, another material claim is missing or likely stale, or the user explicitly needs a page-specific citation. Prefer one specific Docs MCP search and, if it returns a clearly relevant page, one fetch; for unresolved Codex capability names, acronyms, scheduling terms, or exact error text, this Docs MCP step is the next source before web search. After the manual plus any permitted Docs MCP gap-fill, resolve remaining gaps as bounded uncertainty. Use official-domain web fallback only after that Docs MCP path is unavailable or unhelpful. If the claim is still not established, stop with bounded uncertainty. If official docs/manual conflict with a callable capability already surfaced in the current session, state the conflict and prefer verified current-session behavior for that environment.
+仅当 manual 不可用、辅助工具失败、不允许临时缓存、另一项实质性声明缺失或可能陈旧、或用户明确需要页面级引用时，才使用最窄的官方下一来源。优先一次具体的 Docs MCP 搜索，若返回明显相关页面则一次拉取；对于未解决的 Codex 能力名、缩写、调度术语或确切错误文本，此 Docs MCP 步骤是 web 搜索之前的下一来源。在 manual 加任何允许的 Docs MCP 填补之后，将剩余缺口解析为有界不确定性。仅当该 Docs MCP 路径不可用或无帮助时，使用官方域名 web 回退。若声明仍未确立，以有界不确定性停止。若官方文档/manual 与当前会话中已呈现的可调用能力冲突，说明冲突并优先该环境中已验证的当前会话行为。
 
-For undocumented or private-looking model slugs, product mode labels, entitlement labels, account access paths, or rollout names, answer from current public docs and bounded uncertainty. Those labels are not a reason to leave the public source route.
+对于未文档化或看似私有的 model slug、产品模式标签、权益标签、账户访问路径或 rollout 名称，从当前公开文档与有界不确定性作答。这些标签不是离开公开来源路线的理由。
 
-For support-style diagnostics, prefer a layer-by-layer answer from the manual over provider-specific web lookups: installed/enabled plugin, bundled app or connector authorization, MCP setup, workspace/admin policy, restart or new-thread expectations, then support or feedback if still unresolved.
+对于支持式诊断，优先从 manual 给出分层回答，而非特定提供商的 web 查找：已安装/已启用的插件、bundled app 或 connector 授权、MCP 设置、工作区/管理员策略、重启或新线程预期，然后仍未解决则转支持或反馈。
 
-If the source route still does not establish a claim, return bounded uncertainty or route to support, an admin, or product feedback instead of widening the investigation.
+若来源路线仍未确立某声明，返回有界不确定性或转支持、管理员或产品反馈，而不是扩大调查范围。
 
-For unresolved product terminology, answer from the manual plus the allowed official next source. If those sources do not establish the term, answer with bounded uncertainty from those sources.
+对于未解决的产品术语，从 manual 加允许的官方下一来源作答。若这些来源未确立该术语，以这些来源的有界不确定性作答。
 
-### Surface Map
+### 形态图
 
-When Codex nouns or durable-instruction surfaces overlap, recommend the smallest surface that matches the scope:
+当 Codex 名词或持久指令形态重叠时，推荐匹配范围的最小形态：
 
-- Prompt or thread context -> one-off task constraints.
-- `AGENTS.md` -> durable repo conventions, commands, verification steps, and review expectations; closer nested files apply under their subtree.
-- Project `.codex/config.toml` -> trusted-repo Codex settings such as sandbox, MCP, hooks, model, or reasoning defaults.
-- Global config or global guidance -> personal defaults across repos.
-- Skill -> reusable task workflow with references or scripts.
-- Plugin -> installable bundle with skills plus commands, tools, MCP config, hooks, assets, apps, or marketplace metadata.
-- MCP server or app connector -> live external data/actions or authorized private app/workspace data. Use connectors for private Google Docs, Calendar, Slack, GitHub, Notion, and similar data instead of web search or model memory.
-- Automation -> scheduled checks, reminders, monitors, or follow-up work; use a thread heartbeat when continuity in an existing thread matters.
-- Hook -> lifecycle enforcement around tool calls, commands, or file edits.
+- Prompt 或 thread context -> 一次性任务约束。
+- `AGENTS.md` -> 持久仓库约定、命令、验证步骤和审查期望；更近的嵌套文件在其子树下适用。
+- 项目 `.codex/config.toml` -> 受信任仓库的 Codex 设置，如 sandbox、MCP、hooks、model 或 reasoning 默认值。
+- 全局 config 或全局指引 -> 跨仓库的个人默认值。
+- Skill -> 带 references 或 scripts 的可复用任务工作流。
+- Plugin -> 带 skills 以及 commands、tools、MCP config、hooks、assets、apps 或 marketplace 元数据的可安装包。
+- MCP server 或 app connector -> 实时外部数据/操作或已授权的私有应用/工作区数据。对于私有 Google Docs、Calendar、Slack、GitHub、Notion 及类似数据，使用 connector 而非 web 搜索或模型记忆。
+- Automation -> 计划检查、提醒、监控或后续工作；当在已有线程中保持连续性重要时，使用线程心跳。
+- Hook -> 围绕工具调用、命令或文件编辑的生命周期强制。
 
-Split mixed-scope requests instead of forcing one answer. Example: "always do X, but only for this PR" defaults to prompt/thread context for the current run; use `AGENTS.md` or project config only if it should persist, hooks only for mechanical enforcement, and automations only for scheduled or follow-up work.
+拆分混合范围请求，而非强行给一个答案。示例："always do X, but only for this PR" 默认对当前运行使用 prompt/thread context；仅当应持久化时使用 `AGENTS.md` 或项目 config，仅用于机械强制时使用 hooks，仅用于计划或后续工作时使用 automations。
 
-Use this quick product map when needed: CLI is terminal-first local repo work; IDE extension is editor-attached coding; Codex app is desktop planning, review, and interactive work; cloud/web is hosted parallel/offloaded work; Browser Use/in-app browser is Codex-controlled web testing; Chrome extension uses the user's Chrome profile; Computer Use controls desktop apps and OS UI. Keep `config.toml` defaults, `requirements.toml` constraints, and managed/admin policy separate.
+需要时使用此快速产品图：CLI 是终端优先的本地仓库工作；IDE extension 是编辑器附连的编码；Codex app 是桌面规划、审查和交互式工作；cloud/web 是托管的并行/卸载工作；Browser Use/应用内浏览器是 Codex 控制的 web 测试；Chrome extension 使用用户的 Chrome 配置；Computer Use 控制桌面应用和 OS UI。将 `config.toml` 默认值、`requirements.toml` 约束和托管/管理员策略分开。
 
-### Boundaries And Output
+### 边界与输出
 
-- API key auth does not imply ChatGPT, cloud task, or connector access. For plugin/app/auth failures, check bundle availability, plugin installed/enabled state, connector/app authorization, MCP setup, restart/refresh expectations, workspace policy, and per-surface availability before answering.
-- Sandbox or network denials need scoped escalation with a clear justification. Destructive commands, writes outside the workspace, or broad access changes require explicit approval.
-- Memory can provide user preference or context, but explicit prompt instructions win and memory is not a source for current external facts.
-- For affirmative surface-selection answers, use this shape: recommendation, why, what to avoid, and the manual/source evidence used.
-- When page-specific Codex citations are actually needed, these anchors often fit: `concepts/customization#agents-guidance` for `AGENTS.md`, `concepts/customization#skills` for skills, `plugins/build#plugin-structure` for plugins, `concepts/customization#mcp` for MCP, `config-advanced#hooks` for hooks, `app/automations#thread-automations` for thread automations, and `config-reference#configtoml` for config.
+- API key 认证不意味着 ChatGPT、cloud task 或 connector 访问。对于 plugin/app/auth 失败，回答前检查 bundle 可用性、插件已安装/已启用状态、connector/app 授权、MCP 设置、重启/刷新预期、工作区策略和各形态可用性。
+- 沙箱或网络拒绝需要带清晰理由的有界升级。破坏性命令、工作区外写入或广泛访问变更需要显式批准。
+- Memory 可提供用户偏好或上下文，但显式 prompt 指令优先，且 memory 不是当前外部事实的来源。
+- 对于肯定性形态选择回答，使用此形状：推荐、原因、应避免什么、以及所用的 manual/来源证据。
+- 当确实需要页面级 Codex 引用时，这些锚点通常适用：`concepts/customization#agents-guidance` 用于 `AGENTS.md`，`concepts/customization#skills` 用于 skills，`plugins/build#plugin-structure` 用于 plugins，`concepts/customization#mcp` 用于 MCP，`config-advanced#hooks` 用于 hooks，`app/automations#thread-automations` 用于 thread automations，`config-reference#configtoml` 用于 config。
 
-## If MCP server is missing
+## 若 MCP server 缺失
 
-If MCP tools fail or no OpenAI docs resources are available:
+若 MCP 工具失败或无 OpenAI docs 资源可用：
 
-1. Run the install command yourself: `codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp`
-2. If it fails due to permissions/sandboxing, immediately retry the same command with escalated permissions and include a 1-sentence justification for approval.
-3. Ask the user to run the install command only if the escalated attempt fails.
-4. Ask the user to restart Codex.
-5. Re-run the doc search/fetch after restart.
+1. 自行运行安装命令：`codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp`
+2. 若因权限/沙箱失败，立即以提升权限重试同一命令，并附一句批准理由。
+3. 仅当提升尝试失败时，才请用户运行安装命令。
+4. 请用户重启 Codex。
+5. 重启后重新运行文档搜索/拉取。
 
-## Workflow
+## 工作流
 
-1. Clarify whether the request is general docs lookup, model selection, a model-string upgrade, prompt-upgrade guidance, or broader API/provider migration.
-2. For Codex self-knowledge requests, follow the Codex self-knowledge source procedure above.
-3. For model-selection or upgrade requests, prefer current remote docs over bundled references when the user asks for latest/current/default guidance.
-   - Fetch `https://developers.openai.com/api/docs/guides/latest-model.md`.
-   - Find the latest model ID and explicit migration or prompt-guidance links.
-   - Prefer explicit links from the latest-model page over derived URLs.
-   - For explicit named-model requests, preserve the requested model target. Mention newer remote guidance only as optional.
-   - For dynamic latest/current/default upgrades, run `node scripts/resolve-latest-model-info.js`, then fetch both returned guide URLs directly when possible.
-   - If direct guide fetch fails, use the developer-docs MCP tools or official OpenAI-domain search to find the same guide content.
-   - If remote docs are unavailable, use bundled fallback references and say that fallback guidance was used.
-4. For model upgrades, keep changes narrow: update active OpenAI API model defaults and directly related prompts only when safe.
-5. Leave historical docs, examples, eval baselines, fixtures, provider comparisons, provider registries, pricing tables, alias defaults, low-cost fallback paths, and ambiguous older model usage unchanged unless the user explicitly asks to upgrade them.
-6. Keep SDK, tooling, IDE, plugin, shell, auth, and provider-environment migrations out of a model-and-prompt upgrade unless the user explicitly asks for them.
-7. If an upgrade needs API-surface changes, schema rewiring, tool-handler changes, or implementation work beyond a literal model-string replacement and prompt edits, report it as blocked or confirmation-needed.
-8. For general docs lookup, search docs with a precise query, fetch the best page and exact section needed, and answer with concise citations.
+1. 澄清请求是通用文档查找、模型选择、model-string 升级、prompt 升级指引，还是更广泛的 API/提供商迁移。
+2. 对于 Codex 自身知识请求，遵循上文 Codex 自身知识来源流程。
+3. 对于模型选择或升级请求，当用户询问 latest/current/default 指引时，优先使用当前远程文档而非内置参考。
+   - 拉取 `https://developers.openai.com/api/docs/guides/latest-model.md`。
+   - 查找最新 model ID 和显式的迁移或 prompt-guidance 链接。
+   - 优先使用 latest-model 页面的显式链接而非推导的 URL。
+   - 对于显式点名的模型请求，保留请求的模型目标。仅将更新的远程指引作为可选项提及。
+   - 对于动态的 latest/current/default 升级，运行 `node scripts/resolve-latest-model-info.js`，然后在可能时直接拉取返回的两个 guide URL。
+   - 若直接 guide 拉取失败，使用 developer-docs MCP 工具或官方 OpenAI 域名搜索查找相同的 guide 内容。
+   - 若远程文档不可用，使用内置回退参考并说明已使用回退指引。
+4. 对于模型升级，保持改动窄：仅在安全时更新活跃的 OpenAI API model 默认值和直接相关的 prompt。
+5. 除非用户明确要求升级，否则保持历史文档、示例、eval 基线、fixtures、提供商比较、提供商注册表、定价表、别名默认值、低成本回退路径和模糊的旧模型用法不变。
+6. 除非用户明确要求，否则将 SDK、工具、IDE、插件、shell、auth 和提供商环境的迁移排除在模型与 prompt 升级之外。
+7. 若升级需要 API 表面变更、schema 重接、tool-handler 变更或超出字面 model-string 替换和 prompt 编辑的实现工作，报告为受阻或需确认。
+8. 对于通用文档查找，用精确查询搜索文档，拉取所需最佳页面和确切章节，并以简洁引用作答。
 
-## Reference map
+## 参考映射
 
-Read only what you need:
+仅按需读取：
 
-- `https://developers.openai.com/api/docs/guides/latest-model.md` -> current model-selection and "best/latest/current model" questions.
-- `scripts/fetch-codex-manual.mjs` -> current Codex manual fetch, verification, local temp cache, and outline generation.
-- `https://developers.openai.com/codex/codex-manual.md` -> current Codex self-knowledge synthesis, including setup, customization, skills, plugins, MCP, hooks, `AGENTS.md`, automations, and surface behavior; normally access it through the helper path and targeted file reads when temp caching is available.
-- `references/latest-model.md` -> bundled fallback for model-selection and "best/latest/current model" questions.
-- `references/upgrade-guide.md` -> bundled fallback for model upgrade and upgrade-planning requests.
-- `references/prompting-guide.md` -> bundled fallback for prompt rewrites and prompt-behavior upgrades.
+- `https://developers.openai.com/api/docs/guides/latest-model.md` -> 当前模型选择与 "best/latest/current model" 问题。
+- `scripts/fetch-codex-manual.mjs` -> 当前 Codex manual 拉取、验证、本地临时缓存和 outline 生成。
+- `https://developers.openai.com/codex/codex-manual.md` -> 当前 Codex 自身知识综合，包括设置、定制、skills、plugins、MCP、hooks、`AGENTS.md`、automations 和形态行为；通常在临时缓存可用时通过辅助工具路径和目标文件读取访问。
+- `references/latest-model.md` -> 模型选择与 "best/latest/current model" 问题的内置回退。
+- `references/upgrade-guide.md` -> 模型升级和升级规划请求的内置回退。
+- `references/prompting-guide.md` -> prompt 重写和 prompt 行为升级的内置回退。
 
-## Quality rules
+## 质量规则
 
-- Treat OpenAI docs as the source of truth; avoid speculation.
-- For Codex self-knowledge, follow the source route above instead of relying on remembered behavior.
-- Keep migration changes narrow and behavior-preserving.
-- Prefer prompt-only upgrades when possible.
-- Avoid inventing pricing, availability, parameters, API changes, or breaking changes.
-- Keep quotes short and within policy limits; prefer paraphrase with citations.
-- If multiple pages differ, call out the difference and cite both.
-- If official docs and verified callable current-session behavior disagree, state the conflict before making broad claims or edits.
-- If docs do not cover the user’s need, say so and offer next steps.
+- 将 OpenAI 文档视为事实来源；避免猜测。
+- 对于 Codex 自身知识，遵循上文来源路线，而非依赖记忆的行为。
+- 保持迁移改动窄且行为保留。
+- 可能时优先仅 prompt 升级。
+- 避免编造定价、可用性、参数、API 变更或破坏性变更。
+- 保持引用简短并在策略限制内；优先带引用的复述。
+- 若多个页面有差异，指出差异并两者都引用。
+- 若官方文档与已验证的当前会话可调用行为不一致，在做出广泛声明或编辑前说明冲突。
+- 若文档未覆盖用户需求，明确说明并提供下一步。
 
-## Tooling notes
+## 工具说明
 
-- Use MCP doc tools before web search for OpenAI-related markdown docs. The Codex manual flow is the exception: follow the Codex self-knowledge source procedure for broad Codex synthesis.
-- If the MCP server is installed but returns no meaningful results, then use web search as a fallback.
-- When falling back to web search, restrict to official OpenAI domains (developers.openai.com, platform.openai.com) and cite sources.
+- 对于 OpenAI 相关 markdown 文档，在 web 搜索之前使用 MCP 文档工具。Codex manual 流程是例外：对于广泛的 Codex 综合，遵循 Codex 自身知识来源流程。
+- 若 MCP server 已安装但返回无意义结果，则使用 web 搜索作为回退。
+- 当回退到 web 搜索时，限制在官方 OpenAI 域名（developers.openai.com、platform.openai.com）并引用来源。

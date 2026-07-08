@@ -1,34 +1,33 @@
 ---
 name: plugin-creator
-description: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, valid manifest defaults, and personal-marketplace entries by default. Use when Codex needs to create a new personal plugin, add optional plugin structure, generate or update marketplace entries for plugin ordering and availability metadata, or update an existing local plugin during development with the CLI-driven cachebuster and reinstall flow.
+description: 为 Codex 创建并脚手架生成插件目录，包含必需的 `.codex-plugin/plugin.json`、可选的插件文件夹/文件、有效的 manifest 默认值，以及默认的个人 marketplace 条目。当 Codex 需要创建新个人插件、添加可选插件结构、生成或更新 marketplace 条目以控制插件排序与可用性元数据，或在开发期间用 CLI 驱动的 cachebuster 与重装流程更新现有本地插件时使用。
 ---
 
 # Plugin Creator
 
-## Quick Start
+## 快速开始
 
-1. Run the scaffold script:
+1. 运行脚手架脚本：
 
 ```bash
-# Plugin names are normalized to lower-case hyphen-case and must be <= 64 chars.
-# The generated folder and plugin.json name are always the same.
-# Run from the skill root (the directory containing this `SKILL.md`).
-# By default creates in `~/plugins/<plugin-name>`.
+# Plugin 名称会被规范化为小写连字符形式，且必须 <= 64 字符。
+# 生成的文件夹名与 plugin.json 的 name 始终一致。
+# 在 skill 根目录（包含本 `SKILL.md` 的目录）下运行。
+# 默认创建在 `~/plugins/<plugin-name>`。
 python3 scripts/create_basic_plugin.py <plugin-name>
 ```
 
-2. Edit `<plugin-path>/.codex-plugin/plugin.json` when the request gives specific metadata.
-   The scaffold starts with valid defaults and must not contain `[TODO: ...]` placeholders.
+2. 当请求给出具体元数据时，编辑 `<plugin-path>/.codex-plugin/plugin.json`。
+   脚手架以有效默认值起步，且不得包含 `[TODO: ...]` 占位符。
 
-3. Generate or update the personal marketplace entry when the plugin should appear in Codex UI ordering:
+3. 当插件应出现在 Codex UI 排序中时，生成或更新个人 marketplace 条目：
 
 ```bash
-# Personal marketplace entries default to `~/.agents/plugins/marketplace.json`.
+# 个人 marketplace 条目默认在 `~/.agents/plugins/marketplace.json`。
 python3 scripts/create_basic_plugin.py my-plugin --with-marketplace
 ```
 
-Only specify `--marketplace-name <name>` when the default `personal` marketplace name is already
-taken or installed and you need to seed a different new marketplace file:
+仅当默认的 `personal` marketplace 名称已被占用或已安装、且需要种子化不同的新 marketplace 文件时，才指定 `--marketplace-name <name>`：
 
 ```bash
 python3 scripts/create_basic_plugin.py my-plugin \
@@ -36,7 +35,7 @@ python3 scripts/create_basic_plugin.py my-plugin \
   --marketplace-name team-local
 ```
 
-Only use a repo/team marketplace when the user specifically asks for that destination:
+仅当用户明确要求该目的地时，才使用仓库/团队 marketplace：
 
 ```bash
 python3 scripts/create_basic_plugin.py my-plugin \
@@ -45,12 +44,9 @@ python3 scripts/create_basic_plugin.py my-plugin \
   --with-marketplace
 ```
 
-When the user specifies a marketplace path, make sure that marketplace is actually installed before
-telling the user to reinstall from it. The default personal marketplace file at
-`~/.agents/plugins/marketplace.json` is discovered implicitly, but other marketplace paths are not.
-On Windows, use the equivalent path under the user profile.
+当用户指定 marketplace 路径时，在告知用户从其重装之前，确保该 marketplace 已实际安装。默认的个人 marketplace 文件 `~/.agents/plugins/marketplace.json` 会被隐式发现，但其他 marketplace 路径不会。在 Windows 上，使用用户配置目录下的等价路径。
 
-4. Generate/adjust optional companion folders as needed:
+4. 按需生成/调整可选的伴随文件夹：
 
 ```bash
 python3 scripts/create_basic_plugin.py my-plugin \
@@ -59,41 +55,38 @@ python3 scripts/create_basic_plugin.py my-plugin \
   --with-skills --with-hooks --with-scripts --with-assets --with-mcp --with-apps --with-marketplace
 ```
 
-`<parent-plugin-directory>` is the directory where the plugin folder `<plugin-name>` will be
-created (for example `~/plugins`).
+`<parent-plugin-directory>` 是将创建插件文件夹 `<plugin-name>` 的目录（例如 `~/plugins`）。
 
-5. Before handing back a generated plugin, run:
+5. 在交回生成的插件之前，运行：
 
 ```bash
 python3 scripts/validate_plugin.py <plugin-path>
 ```
 
-For updates to an existing local plugin during development, keep the scaffold flow as-is and use the
-reference instead of hand-editing marketplace files:
+对于开发期间更新现有本地插件，保持脚手架流程不变，使用参考而非手编 marketplace 文件：
 
 ```bash
 python3 scripts/update_plugin_cachebuster.py <plugin-path>
 ```
 
-Prefer the helper default cachebuster unless the user explicitly asks for a specific override.
-See `references/installing-and-updating.md` for the expected cachebuster and reinstall flow while iterating on an existing local plugin.
+除非用户明确要求特定覆盖，否则优先使用辅助工具的默认 cachebuster。关于在现有本地插件上迭代时的预期 cachebuster 与重装流程，见 `references/installing-and-updating.md`。
 
-## What this skill creates
+## 本 skill 创建的内容
 
-- Default marketplace-backed scaffolds use the personal marketplace file at
-  `~/.agents/plugins/marketplace.json`, with plugins generally being stored in
-  `~/plugins/<plugin-name>/`.
-- Creates plugin root at `/<parent-plugin-directory>/<plugin-name>/`.
-- Always creates `/<parent-plugin-directory>/<plugin-name>/.codex-plugin/plugin.json`.
-- Fills the manifest with the validated schema shape that the ingestion path accepts.
-- Creates or updates `~/.agents/plugins/marketplace.json` when `--with-marketplace` is set.
-  - If the marketplace file does not exist yet, seed a personal marketplace root before adding the first plugin entry.
-- `<plugin-name>` is normalized using skill-creator naming rules:
-  - `My Plugin` → `my-plugin`
-  - `My--Plugin` → `my-plugin`
-  - underscores, spaces, and punctuation are converted to `-`
-  - result is lower-case hyphen-delimited with consecutive hyphens collapsed
-- Supports optional creation of:
+- 默认基于 marketplace 的脚手架使用位于
+  `~/.agents/plugins/marketplace.json` 的个人 marketplace 文件，插件通常存储在
+  `~/plugins/<plugin-name>/`。
+- 在 `/<parent-plugin-directory>/<plugin-name>/` 创建插件根目录。
+- 始终创建 `/<parent-plugin-directory>/<plugin-name>/.codex-plugin/plugin.json`。
+- 用 ingestion 路径接受的已验证 schema 形状填充 manifest。
+- 当设置 `--with-marketplace` 时创建或更新 `~/.agents/plugins/marketplace.json`。
+  - 若 marketplace 文件尚不存在，在添加第一个插件条目之前种子化个人 marketplace 根。
+- `<plugin-name>` 使用 skill-creator 命名规则规范化：
+  - `My Plugin` -> `my-plugin`
+  - `My--Plugin` -> `my-plugin`
+  - 下划线、空格和标点转换为 `-`
+  - 结果为小写连字符定界，连续连字符合并
+- 支持可选创建：
   - `skills/`
   - `hooks/`
   - `scripts/`
@@ -101,41 +94,39 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
   - `.mcp.json`
   - `.app.json`
 
-## Marketplace workflow
+## Marketplace 工作流
 
-- Personal-marketplace creation defaults to `~/.agents/plugins/marketplace.json`. Here,
-  "personal marketplace" means the marketplace whose file is at that path.
-- Repo/team marketplace creation is opt-in through both `--path` and `--marketplace-path`, only
-  when the user specifically requests it.
-- `--marketplace-name` is an exception path. Use it only when the default `personal` marketplace
-  name is already taken and you need to seed a different new marketplace file.
-- Do not use `--marketplace-name` to rename an existing marketplace file in place. If the file
-  already exists, its top-level `name` must already match.
-- If the user specifies a different marketplace path, treat that marketplace as needing explicit installation via `codex plugin marketplace add`.
-- Prefer `scripts/read_marketplace_name.py` when you need the marketplace name from any
-  `marketplace.json` file. With no argument it reads the default personal marketplace; with an
-  explicit path it works for repo/team marketplaces too.
-- In either location, the generated source path remains `./plugins/<plugin-name>`.
-- Marketplace root metadata supports top-level `name` plus optional `interface.displayName`.
-- Treat plugin order in `plugins[]` as render order in Codex. Append new entries unless a user explicitly asks to reorder the list.
-- `displayName` belongs inside the marketplace `interface` object, not individual `plugins[]` entries.
-- Each generated marketplace entry must include all of:
+- 个人 marketplace 创建默认到 `~/.agents/plugins/marketplace.json`。此处
+  "personal marketplace" 指文件位于该路径的 marketplace。
+- 仓库/团队 marketplace 创建通过 `--path` 和 `--marketplace-path` 两者 opt-in，仅当用户明确请求时。
+- `--marketplace-name` 是例外路径。仅当默认的 `personal` marketplace
+  名称已被占用且需要种子化不同的新 marketplace 文件时使用。
+- 不要用 `--marketplace-name` 就地重命名现有 marketplace 文件。若文件
+  已存在，其顶层 `name` 必须已匹配。
+- 若用户指定不同的 marketplace 路径，将该 marketplace 视为需要通过 `codex plugin marketplace add` 显式安装。
+- 当需要从任何
+  `marketplace.json` 文件获取 marketplace 名称时，优先使用 `scripts/read_marketplace_name.py`。无参数时读取默认个人 marketplace；带显式路径时也适用于仓库/团队 marketplace。
+- 在任一位置，生成的 source 路径保持 `./plugins/<plugin-name>`。
+- Marketplace 根元数据支持顶层 `name` 加可选的 `interface.displayName`。
+- 将 `plugins[]` 中的插件顺序视为 Codex 中的渲染顺序。除非用户明确要求重排列表，否则追加新条目。
+- `displayName` 属于 marketplace `interface` 对象内部，而非单个 `plugins[]` 条目。
+- 每个生成的 marketplace 条目必须包含以下全部：
   - `policy.installation`
   - `policy.authentication`
   - `category`
-- Default new entries to:
+- 新条目默认：
   - `policy.installation: "AVAILABLE"`
   - `policy.authentication: "ON_INSTALL"`
-- Override defaults only when the user explicitly specifies another allowed value.
-- Allowed `policy.installation` values:
+- 仅当用户明确指定另一个允许值时才覆盖默认。
+- 允许的 `policy.installation` 值：
   - `NOT_AVAILABLE`
   - `AVAILABLE`
   - `INSTALLED_BY_DEFAULT`
-- Allowed `policy.authentication` values:
+- 允许的 `policy.authentication` 值：
   - `ON_INSTALL`
   - `ON_USE`
-- Treat `policy.products` as an override. Omit it unless the user explicitly requests product gating.
-- The generated plugin entry shape is:
+- 将 `policy.products` 视为覆盖。除非用户明确请求产品门控，否则省略。
+- 生成的插件条目形状：
 
 ```json
 {
@@ -152,10 +143,10 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
 }
 ```
 
-- Use `--force` only when intentionally replacing an existing marketplace entry for the same plugin name.
-- If the target marketplace file does not exist yet, create it with top-level `"name"`, an `"interface"` object containing `"displayName"`, and a `plugins` array, then add the new entry.
+- 仅当有意替换同一插件名称的现有 marketplace 条目时才使用 `--force`。
+- 若目标 marketplace 文件尚不存在，创建它时带顶层 `"name"`、包含 `"displayName"` 的 `"interface"` 对象和 `plugins` 数组，然后添加新条目。
 
-- For a brand-new marketplace file, the root object should look like:
+- 对于全新的 marketplace 文件，根对象应如下：
 
 ```json
 {
@@ -180,63 +171,49 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
 }
 ```
 
-## Required behavior
+## 必需行为
 
-- Outer folder name and `plugin.json` `"name"` are always the same normalized plugin name.
-- Do not remove required structure; keep `.codex-plugin/plugin.json` present.
-- Do not leave `[TODO: ...]` placeholders in plugin manifests.
-- Keep `apps` and `mcpServers` out of `plugin.json` unless their companion files are actually created.
-- Omit unsupported plugin manifest fields that validation rejects, including `hooks`.
-- If creating files inside an existing plugin path, use `--force` only when overwrite is intentional.
-- Preserve any existing marketplace `interface.displayName`.
-- When generating marketplace entries, always write `policy.installation`, `policy.authentication`, and `category` even if their values are defaults.
-- Add `policy.products` only when the user explicitly asks for that override.
-- Keep marketplace `source.path` relative to the selected marketplace root as `./plugins/<plugin-name>`.
-- Only use `--marketplace-name` when creating a new marketplace file whose name should not be
-  `personal` because that name is already taken or installed elsewhere.
-- If Codex would need approval to write the marketplace file, ask for that approval before
-  proceeding. If the user prefers to run the write themselves, provide the exact scaffold command
-  and then continue from validation or subsequent plugin edits instead of leaving the workflow
-  vague.
-- For updates to an existing local plugin during development, do not hand-edit marketplace config
-  or `marketplace.json`. Use the update flow documented in
-  `references/installing-and-updating.md` and `scripts/update_plugin_cachebuster.py`.
-- Do not tell the user to run `codex plugin marketplace add` for the default personal-marketplace
-  flow. That command is for explicit non-default marketplace configuration, not for the standard
-  `~/.agents/plugins/marketplace.json` path.
-- If the user provided a non-default `--marketplace-path`, make sure that marketplace is installed
-  before giving reinstall instructions. Use `codex plugin marketplace add <path-to-marketplace-root>`
-  when that explicit marketplace has not been configured yet.
-- When the workflow created or updated a marketplace-backed plugin, end the final user-facing
-  response with a short Codex app handoff. Say `To view this in the Codex app:` and write
-  `View <normalized plugin name>` and `Share <normalized plugin name>` as Markdown links, not raw
-  URLs or code spans.
-- The View deeplink uses `codex://plugins/<normalized plugin name>?marketplacePath=<absolute marketplace.json path>`.
-  The Share deeplink uses the same URL with `&mode=share`.
-- Replace the placeholders with the real normalized plugin name and absolute `marketplace.json`
-  path from the scaffolded plugin. URL-encode the path segment and query value when needed.
-- Do not add `pluginName` or `hostId` query parameters to these deeplinks. Codex derives both after
-  the user clicks the link.
-- Do not emit the `View <normalized plugin name>` or `Share <normalized plugin name>` links when no marketplace entry was
-  created or updated.
+- 外层文件夹名和 `plugin.json` 的 `"name"` 始终是相同的规范化插件名。
+- 不要移除必需结构；保持 `.codex-plugin/plugin.json` 存在。
+- 不要在插件 manifest 中留 `[TODO: ...]` 占位符。
+- 除非伴随文件实际已创建，否则将 `apps` 和 `mcpServers` 排除在 `plugin.json` 之外。
+- 省略验证会拒绝的不支持的插件 manifest 字段，包括 `hooks`。
+- 若在现有插件路径内创建文件，仅当有意覆盖时才使用 `--force`。
+- 保留任何现有 marketplace `interface.displayName`。
+- 生成 marketplace 条目时，始终写入 `policy.installation`、`policy.authentication` 和 `category`，即使其值为默认。
+- 仅当用户明确要求该覆盖时才添加 `policy.products`。
+- 保持 marketplace `source.path` 相对于所选 marketplace 根为 `./plugins/<plugin-name>`。
+- 仅当创建的 marketplace 文件名称不应为
+  `personal`（因该名称已被占用或在别处安装）时才使用 `--marketplace-name`。
+- 若 Codex 需要批准才能写入 marketplace 文件，在继续之前请求该批准。若用户偏好自己运行写入，提供确切的脚手架命令，然后从验证或后续插件编辑继续，而非让工作流含糊不清。
+- 对于开发期间更新现有本地插件，不要手编 marketplace config
+  或 `marketplace.json`。使用
+  `references/installing-and-updating.md` 和 `scripts/update_plugin_cachebuster.py` 中记录的更新流程。
+- 不要为默认个人 marketplace 流程告知用户运行 `codex plugin marketplace add`。该命令用于显式非默认 marketplace 配置，而非标准 `~/.agents/plugins/marketplace.json` 路径。
+- 若用户提供了非默认 `--marketplace-path`，在给出重装说明之前确保该 marketplace 已安装。当该显式 marketplace 尚未配置时，使用 `codex plugin marketplace add <path-to-marketplace-root>`。
+- 当工作流创建或更新了基于 marketplace 的插件时，以简短的 Codex app 交接结束最终面向用户的响应。说 `To view this in the Codex app:` 并将 `View <normalized plugin name>` 和 `Share <normalized plugin name>` 写为 Markdown 链接，而非原始 URL 或代码 span。
+- View deeplink 使用 `codex://plugins/<normalized plugin name>?marketplacePath=<absolute marketplace.json path>`。
+- Share deeplink 使用相同 URL 加 `&mode=share`。
+- 用脚手架插件的真实规范化插件名和绝对 `marketplace.json` 路径替换占位符。需要时对路径段和查询值进行 URL 编码。
+- 不要向这些 deeplink 添加 `pluginName` 或 `hostId` 查询参数。Codex 在用户点击链接后推导两者。
+- 未创建或更新 marketplace 条目时，不要输出 `View <normalized plugin name>` 或 `Share <normalized plugin name>` 链接。
 
-## Reference to exact spec sample
+## 精确规范示例参考
 
-For the exact canonical sample JSON for both plugin manifests and marketplace entries, use:
+对于插件 manifest 和 marketplace 条目的确切规范示例 JSON，使用：
 
 - `references/plugin-json-spec.md`
-- `references/installing-and-updating.md` for update/reinstall guidance while
-  iterating on an existing local plugin, plus the new-thread pickup behavior after reinstall
+- `references/installing-and-updating.md` 用于在现有本地插件上迭代时的更新/重装指引，以及重装后的新线程接管行为
 
-## Validation
+## 验证
 
-After editing `SKILL.md`, run:
+编辑 `SKILL.md` 后，运行：
 
 ```bash
 python3 ../skill-creator/scripts/quick_validate.py .
 ```
 
-Before handing back a generated plugin, run:
+在交回生成的插件之前，运行：
 
 ```bash
 python3 scripts/validate_plugin.py <plugin-path>

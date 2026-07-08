@@ -1,305 +1,79 @@
 ---
 name: skill-creator
-description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations.
+description: 创建 skill 的指南。当用户想创建新 skill（或更新已有 skill），以扩展 Codex 能力、提供专门知识、工作流或工具集成时，使用本 skill。
 metadata:
   short-description: Create or update a skill
 ---
 
-# Skill Creator
+# Skill 创建器
 
-This skill provides guidance for creating effective skills.
+本 skill 提供创建有效 skill 的指导。
 
-## About Skills
+## 关于 Skills
 
-Skills are modular, self-contained folders that extend Codex's capabilities by providing
-specialized knowledge, workflows, and tools. Think of them as "onboarding guides" for specific
-domains or tasks—they transform Codex from a general-purpose agent into a specialized agent
-equipped with procedural knowledge that no model can fully possess.
+Skills 是模块化、自包含的文件夹，通过提供专门的知识、工作流和工具来扩展 Codex 的能力。可把它们视为特定领域或任务的"入职指南"--它们把 Codex 从通用 agent 转变为具备程序化知识（任何模型都无法完全具备）的专用 agent。
 
-### What Skills Provide
+### Skills 提供什么
 
-1. Specialized workflows - Multi-step procedures for specific domains
-2. Tool integrations - Instructions for working with specific file formats or APIs
-3. Domain expertise - Company-specific knowledge, schemas, business logic
-4. Bundled resources - Scripts, references, and assets for complex and repetitive tasks
+1. 专门工作流 - 特定领域的多步骤流程
+2. 工具集成 - 操作特定文件格式或 API 的指令
+3. 领域专长 - 公司特定知识、schema、业务逻辑
+4. 打包资源 - 复杂、重复任务的脚本、参考文档和素材
 
-## Core Principles
+## 核心原则
 
-### Concise is Key
+### 简洁至上
 
-The context window is a public good. Skills share the context window with everything else Codex needs: system prompt, conversation history, other Skills' metadata, and the actual user request.
+上下文窗口是公共资源。Skills 与 Codex 需要的其他内容（系统提示、对话历史、其他 Skills 元数据、用户请求）共享上下文窗口。
 
-**Default assumption: Codex is already very smart.** Only add context Codex doesn't already have. Challenge each piece of information: "Does Codex really need this explanation?" and "Does this paragraph justify its token cost?"
+**默认假设：Codex 已经很聪明。** 只添加 Codex 还不知道的内容。对每条信息都质疑："Codex 真的需要这个解释吗？"、"这段文字值得它的 token 开销吗？" 优先用简洁的示例而非冗长的解释。
 
-Prefer concise examples over verbose explanations.
+### 设置合适的自由度
 
-### Set Appropriate Degrees of Freedom
+把指令的具体程度与任务的脆弱性和可变性相匹配：
 
-Match the level of specificity to the task's fragility and variability:
+- **高自由度（文本指令）**：多种方法都可行、决策依赖上下文、用启发式引导时使用。
+- **中自由度（伪代码或带参数脚本）**：存在首选模式、可接受一定变化、配置影响行为时使用。
+- **低自由度（具体脚本、少参数）**：操作脆弱易错、一致性关键、必须遵循特定顺序时使用。
 
-**High freedom (text-based instructions)**: Use when multiple approaches are valid, decisions depend on context, or heuristics guide the approach.
+把 Codex 想象成在探索路径：悬崖边的窄桥需要明确护栏（低自由度），开阔田野则允许很多路线（高自由度）。
 
-**Medium freedom (pseudocode or scripts with parameters)**: Use when a preferred pattern exists, some variation is acceptable, or configuration affects behavior.
+### 保护验证完整性
 
-**Low freedom (specific scripts, few parameters)**: Use when operations are fragile and error-prone, consistency is critical, or a specific sequence must be followed.
+迭代时可使用 subagent 验证 skill 在真实任务上是否有效，或某个可疑问题是否真实存在。这在修订后想对 skill 的行为、输出或失败模式做独立验证时最有用。仅当能启动新 subagent 时才这样做。
 
-Think of Codex as exploring a path: a narrow bridge with cliffs needs specific guardrails (low freedom), while an open field allows many routes (high freedom).
+用 subagent 验证时，把它当作评估面。目标是学习 skill 是否泛化，而非另一个 agent 能否从泄露的上下文重建答案。优先用原始素材（示例提示、输出、diff、日志、trace），只给完成任务所需的最小局部上下文。避免传递预期答案、疑似 bug、预期修复或你的既有结论，除非验证明确需要。
 
-### Protect Validation Integrity
+### Skill 的结构
 
-You may use subagents during iteration to validate whether a skill works on realistic tasks or whether a suspected problem is real. This is most useful when you want an independent pass on the skill's behavior, outputs, or failure modes after a revision.  Only do this when it is possible to start new subagents.
+每个 skill 由必需的 SKILL.md 文件和可选打包资源组成。结构、字段定义、打包资源（scripts/references/assets）用途与"渐进式披露"设计模式（三层加载：元数据/SKILL.md 正文/打包资源）详见 `references/skill-authoring-guide.md`。
 
-When using subagents for validation, treat that as an evaluation surface. The goal is to learn whether the skill generalizes, not whether another agent can reconstruct the answer from leaked context.
+## Skill 创建流程
 
-Prefer raw artifacts such as example prompts, outputs, diffs, logs, or traces. Give the minimum task-local context needed to perform the validation. Avoid passing the intended answer, suspected bug, intended fix, or your prior conclusions unless the validation explicitly requires them.
+创建 skill 涉及以下步骤，按顺序执行，仅在明确不适用时跳过：
 
-### Anatomy of a Skill
+1. **用具体示例理解 skill** - 搞清楚 skill 如何被使用的具体示例。可来自用户直接示例或经用户反馈验证的生成示例。避免一次问太多问题，从最重要的开始，按需跟进。
+2. **规划可复用内容** - 分析每个示例：从零开始怎么执行；重复执行时哪些脚本、参考文档、素材会有帮助。据此列出要包含的可复用资源。
+3. **初始化 skill** - 运行 `init_skill.py` 生成模板目录。运行前询问用户想在哪里创建，默认 `$CODEX_HOME/skills`（`CODEX_HOME` 未设时回退到 `~/.codex/skills` 以便自动发现）。已有 skill 跳过本步。
+4. **编辑 skill** - 先实现可复用资源（scripts/references/assets），再更新 SKILL.md。脚本必须实际运行测试。大幅修订或 skill 较复杂时，用 subagent 对真实任务做前向测试。
+5. **验证 skill** - 运行 `scripts/quick_validate.py <path/to/skill-folder>` 检查 YAML frontmatter 格式、必填字段、命名规则。失败则修复后重跑。
+6. **迭代** - 在真实任务上使用 skill，发现问题后更新 SKILL.md 或打包资源并再次测试，必要时前向测试。
 
-Every skill consists of a required SKILL.md file and optional bundled resources:
+### Skill 命名
 
-```
-skill-name/
-├── SKILL.md (required)
-│   ├── YAML frontmatter metadata (required)
-│   │   ├── name: (required)
-│   │   └── description: (required)
-│   └── Markdown instructions (required)
-├── agents/ (recommended)
-│   └── openai.yaml - UI metadata for skill lists and chips
-└── Bundled Resources (optional)
-    ├── scripts/          - Executable code (Python/Bash/etc.)
-    ├── references/       - Documentation intended to be loaded into context as needed
-    └── assets/           - Files used in output (templates, icons, fonts, etc.)
-```
+- 只用小写字母、数字、连字符；用户提供的标题规范化为连字符形式（如 "Plan Mode" -> `plan-mode`）。
+- 生成名字时控制在 64 字符以内（字母、数字、连字符）。
+- 优先用简短、动词引导的短语描述动作。
+- 工具名作为命名空间可提升清晰度或触发率（如 `gh-address-comments`、`linear-address-issue`）。
+- skill 文件夹名与 skill 名完全一致。
 
-#### SKILL.md (required)
-
-Every SKILL.md consists of:
-
-- **Frontmatter** (YAML): Contains `name` and `description` fields. These are the only fields that Codex reads to determine when the skill gets used, thus it is very important to be clear and comprehensive in describing what the skill is, and when it should be used.
-- **Body** (Markdown): Instructions and guidance for using the skill. Only loaded AFTER the skill triggers (if at all).
-
-#### Agents metadata (recommended)
-
-- UI-facing metadata for skill lists and chips
-- Read references/openai_yaml.md before generating values and follow its descriptions and constraints
-- Create: human-facing `display_name`, `short_description`, and `default_prompt` by reading the skill
-- Generate deterministically by passing the values as `--interface key=value` to `scripts/generate_openai_yaml.py` or `scripts/init_skill.py`
-- On updates: validate `agents/openai.yaml` still matches SKILL.md; regenerate if stale
-- Only include other optional interface fields (icons, brand color) if explicitly provided
-- See references/openai_yaml.md for field definitions and examples
-
-#### Bundled Resources (optional)
-
-##### Scripts (`scripts/`)
-
-Executable code (Python/Bash/etc.) for tasks that require deterministic reliability or are repeatedly rewritten.
-
-- **When to include**: When the same code is being rewritten repeatedly or deterministic reliability is needed
-- **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
-- **Benefits**: Token efficient, deterministic, may be executed without loading into context
-- **Note**: Scripts may still need to be read by Codex for patching or environment-specific adjustments
-
-##### References (`references/`)
-
-Documentation and reference material intended to be loaded as needed into context to inform Codex's process and thinking.
-
-- **When to include**: For documentation that Codex should reference while working
-- **Examples**: `references/finance.md` for financial schemas, `references/mnda.md` for company NDA template, `references/policies.md` for company policies, `references/api_docs.md` for API specifications
-- **Use cases**: Database schemas, API documentation, domain knowledge, company policies, detailed workflow guides
-- **Benefits**: Keeps SKILL.md lean, loaded only when Codex determines it's needed
-- **Best practice**: If files are large (>10k words), include grep search patterns in SKILL.md
-- **Avoid duplication**: Information should live in either SKILL.md or references files, not both. Prefer references files for detailed information unless it's truly core to the skill—this keeps SKILL.md lean while making information discoverable without hogging the context window. Keep only essential procedural instructions and workflow guidance in SKILL.md; move detailed reference material, schemas, and examples to references files.
-
-##### Assets (`assets/`)
-
-Files not intended to be loaded into context, but rather used within the output Codex produces.
-
-- **When to include**: When the skill needs files that will be used in the final output
-- **Examples**: `assets/logo.png` for brand assets, `assets/slides.pptx` for PowerPoint templates, `assets/frontend-template/` for HTML/React boilerplate, `assets/font.ttf` for typography
-- **Use cases**: Templates, images, icons, boilerplate code, fonts, sample documents that get copied or modified
-- **Benefits**: Separates output resources from documentation, enables Codex to use files without loading them into context
-
-#### What to Not Include in a Skill
-
-A skill should only contain essential files that directly support its functionality. Do NOT create extraneous documentation or auxiliary files, including:
-
-- README.md
-- INSTALLATION_GUIDE.md
-- QUICK_REFERENCE.md
-- CHANGELOG.md
-- etc.
-
-The skill should only contain the information needed for an AI agent to do the job at hand. It should not contain auxiliary context about the process that went into creating it, setup and testing procedures, user-facing documentation, etc. Creating additional documentation files just adds clutter and confusion.
-
-### Progressive Disclosure Design Principle
-
-Skills use a three-level loading system to manage context efficiently:
-
-1. **Metadata (name + description)** - Always in context (~100 words)
-2. **SKILL.md body** - When skill triggers (<5k words)
-3. **Bundled resources** - As needed by Codex (Unlimited because scripts can be executed without reading into context window)
-
-#### Progressive Disclosure Patterns
-
-Keep SKILL.md body to the essentials and under 500 lines to minimize context bloat. Split content into separate files when approaching this limit. When splitting out content into other files, it is very important to reference them from SKILL.md and describe clearly when to read them, to ensure the reader of the skill knows they exist and when to use them.
-
-**Key principle:** When a skill supports multiple variations, frameworks, or options, keep only the core workflow and selection guidance in SKILL.md. Move variant-specific details (patterns, examples, configuration) into separate reference files.
-
-**Pattern 1: High-level guide with references**
-
-```markdown
-# PDF Processing
-
-## Quick start
-
-Extract text with pdfplumber:
-[code example]
-
-## Advanced features
-
-- **Form filling**: See [FORMS.md](FORMS.md) for complete guide
-- **API reference**: See [REFERENCE.md](REFERENCE.md) for all methods
-- **Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
-```
-
-Codex loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
-
-**Pattern 2: Domain-specific organization**
-
-For Skills with multiple domains, organize content by domain to avoid loading irrelevant context:
-
-```
-bigquery-skill/
-├── SKILL.md (overview and navigation)
-└── reference/
-    ├── finance.md (revenue, billing metrics)
-    ├── sales.md (opportunities, pipeline)
-    ├── product.md (API usage, features)
-    └── marketing.md (campaigns, attribution)
-```
-
-When a user asks about sales metrics, Codex only reads sales.md.
-
-Similarly, for skills supporting multiple frameworks or variants, organize by variant:
-
-```
-cloud-deploy/
-├── SKILL.md (workflow + provider selection)
-└── references/
-    ├── aws.md (AWS deployment patterns)
-    ├── gcp.md (GCP deployment patterns)
-    └── azure.md (Azure deployment patterns)
-```
-
-When the user chooses AWS, Codex only reads aws.md.
-
-**Pattern 3: Conditional details**
-
-Show basic content, link to advanced content:
-
-```markdown
-# DOCX Processing
-
-## Creating documents
-
-Use docx-js for new documents. See [DOCX-JS.md](DOCX-JS.md).
-
-## Editing documents
-
-For simple edits, modify the XML directly.
-
-**For tracked changes**: See [REDLINING.md](REDLINING.md)
-**For OOXML details**: See [OOXML.md](OOXML.md)
-```
-
-Codex reads REDLINING.md or OOXML.md only when the user needs those features.
-
-**Important guidelines:**
-
-- **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
-- **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Codex can see the full scope when previewing.
-
-## Skill Creation Process
-
-Skill creation involves these steps:
-
-1. Understand the skill with concrete examples
-2. Plan reusable skill contents (scripts, references, assets)
-3. Initialize the skill (run init_skill.py)
-4. Edit the skill (implement resources and write SKILL.md)
-5. Validate the skill (run quick_validate.py)
-6. Iterate based on real usage and forward-test complex skills.
-
-Follow these steps in order, skipping only if there is a clear reason why they are not applicable.
-
-### Skill Naming
-
-- Use lowercase letters, digits, and hyphens only; normalize user-provided titles to hyphen-case (e.g., "Plan Mode" -> `plan-mode`).
-- When generating names, generate a name under 64 characters (letters, digits, hyphens).
-- Prefer short, verb-led phrases that describe the action.
-- Namespace by tool when it improves clarity or triggering (e.g., `gh-address-comments`, `linear-address-issue`).
-- Name the skill folder exactly after the skill name.
-
-### Step 1: Understanding the Skill with Concrete Examples
-
-Skip this step only when the skill's usage patterns are already clearly understood. It remains valuable even when working with an existing skill.
-
-To create an effective skill, clearly understand concrete examples of how the skill will be used. This understanding can come from either direct user examples or generated examples that are validated with user feedback.
-
-For example, when building an image-editor skill, relevant questions include:
-
-- "What functionality should the image-editor skill support? Editing, rotating, anything else?"
-- "Can you give some examples of how this skill would be used?"
-- "I can imagine users asking for things like 'Remove the red-eye from this image' or 'Rotate this image'. Are there other ways you imagine this skill being used?"
-- "What would a user say that should trigger this skill?"
-- "Where should I create this skill? If you do not have a preference, I will place it in `$CODEX_HOME/skills` (or `~/.codex/skills` when `CODEX_HOME` is unset) so Codex can discover it automatically."
-
-To avoid overwhelming users, avoid asking too many questions in a single message. Start with the most important questions and follow up as needed for better effectiveness.
-
-Conclude this step when there is a clear sense of the functionality the skill should support.
-
-### Step 2: Planning the Reusable Skill Contents
-
-To turn concrete examples into an effective skill, analyze each example by:
-
-1. Considering how to execute on the example from scratch
-2. Identifying what scripts, references, and assets would be helpful when executing these workflows repeatedly
-
-Example: When building a `pdf-editor` skill to handle queries like "Help me rotate this PDF," the analysis shows:
-
-1. Rotating a PDF requires re-writing the same code each time
-2. A `scripts/rotate_pdf.py` script would be helpful to store in the skill
-
-Example: When designing a `frontend-webapp-builder` skill for queries like "Build me a todo app" or "Build me a dashboard to track my steps," the analysis shows:
-
-1. Writing a frontend webapp requires the same boilerplate HTML/React each time
-2. An `assets/hello-world/` template containing the boilerplate HTML/React project files would be helpful to store in the skill
-
-Example: When building a `big-query` skill to handle queries like "How many users have logged in today?" the analysis shows:
-
-1. Querying BigQuery requires re-discovering the table schemas and relationships each time
-2. A `references/schema.md` file documenting the table schemas would be helpful to store in the skill
-
-To establish the skill's contents, analyze each concrete example to create a list of the reusable resources to include: scripts, references, and assets.
-
-### Step 3: Initializing the Skill
-
-At this point, it is time to actually create the skill.
-
-Skip this step only if the skill being developed already exists. In this case, continue to the next step.
-
-Before running `init_skill.py`, ask where the user wants the skill created. If they do not specify a location, default to `$CODEX_HOME/skills`; when `CODEX_HOME` is unset, fall back to `~/.codex/skills` so the skill is auto-discovered.
-
-When creating a new skill from scratch, always run the `init_skill.py` script. The script conveniently generates a new template skill directory that automatically includes everything a skill requires, making the skill creation process much more efficient and reliable.
-
-Usage:
+### 初始化脚本用法
 
 ```bash
 scripts/init_skill.py <skill-name> --path <output-directory> [--resources scripts,references,assets] [--examples]
 ```
 
-Examples:
+示例：
 
 ```bash
 scripts/init_skill.py my-skill --path "${CODEX_HOME:-$HOME/.codex}/skills"
@@ -307,110 +81,29 @@ scripts/init_skill.py my-skill --path "${CODEX_HOME:-$HOME/.codex}/skills" --res
 scripts/init_skill.py my-skill --path ~/work/skills --resources scripts --examples
 ```
 
-The script:
+脚本会创建 skill 目录、生成带 frontmatter 和 TODO 占位符的 SKILL.md 模板、用 `--interface key=value` 传入的 `display_name`/`short_description`/`default_prompt` 创建 `agents/openai.yaml`、按 `--resources` 创建资源目录、`--examples` 时加示例文件。初始化后自定义 SKILL.md 并添加资源，用了 `--examples` 则替换或删除占位文件。
 
-- Creates the skill directory at the specified path
-- Generates a SKILL.md template with proper frontmatter and TODO placeholders
-- Creates `agents/openai.yaml` using agent-generated `display_name`, `short_description`, and `default_prompt` passed via `--interface key=value`
-- Optionally creates resource directories based on `--resources`
-- Optionally adds example files when `--examples` is set
+用 `scripts/generate_openai_yaml.py <path/to/skill-folder> --interface key=value` 可重新生成 openai.yaml。仅当用户明确提供时才包含其他可选界面字段。字段定义见 `references/openai_yaml.md`。
 
-After initialization, customize the SKILL.md and add resources as needed. If you used `--examples`, replace or delete placeholder files.
+### 编辑 SKILL.md 的写作要点
 
-Generate `display_name`, `short_description`, and `default_prompt` by reading the skill, then pass them as `--interface key=value` to `init_skill.py` or regenerate with:
+**始终用祈使句/不定式形式。**
 
-```bash
-scripts/generate_openai_yaml.py <path/to/skill-folder> --interface key=value
-```
+frontmatter 写 `name` 和 `description`：
+- `name`：skill 名。
+- `description`：skill 的主要触发机制，帮助 Codex 理解何时使用。要包含 skill 做什么 + 何时使用的具体触发条件/上下文。所有"何时使用"信息放这里，不放正文（正文在触发后才加载，正文里的"何时使用本 skill"章节对 Codex 无用）。frontmatter 不要包含其他字段。
 
-Only include other optional interface fields when the user explicitly provides them. For full field descriptions and examples, see references/openai_yaml.md.
+正文写使用 skill 及其打包资源的指令。
 
-### Step 4: Edit the Skill
+## 前向测试
 
-When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Codex to use. Include information that would be beneficial and non-obvious to Codex. Consider what procedural knowledge, domain-specific details, or reusable assets would help another Codex instance execute these tasks more effectively.
+前向测试通过启动 subagent 来对 skill 做最小上下文的压力测试。subagent **不应知道**自己在测试 skill，应被当作被用户要求执行任务的 agent。给 subagent 的提示应像：`Use $skill-x at /path/to/skill-x to solve problem y`，而非 `Review the skill at /path/to/skill-x; pretend a user asks you to...`。
 
-After substantial revisions, or if the skill is particularly tricky, you should use subagents to forward-test the skill on realistic tasks or artifacts. When doing so, pass the artifact under validation rather than your diagnosis of what is wrong, and keep the prompt generic enough that success depends on transferable reasoning rather than hidden ground truth.
+决策规则：倾向于前向测试；若认为前向测试可能耗时较长、需要用户额外批准、或修改线上生产系统，则先征得同意--把拟用提示和请求展示给用户，请其给是/否决定及任何修改建议。
 
-#### Start with Reusable Skill Contents
+前向测试注意事项、详细的前向测试与迭代工作流见 `references/skill-authoring-guide.md`。
 
-To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
+## 参考文档
 
-Added scripts must be tested by actually running them to ensure there are no bugs and that the output matches what is expected. If there are many similar scripts, only a representative sample needs to be tested to ensure confidence that they all work while balancing time to completion.
-
-If you used `--examples`, delete any placeholder files that are not needed for the skill. Only create resource directories that are actually required.
-
-#### Update SKILL.md
-
-**Writing Guidelines:** Always use imperative/infinitive form.
-
-##### Frontmatter
-
-Write the YAML frontmatter with `name` and `description`:
-
-- `name`: The skill name
-- `description`: This is the primary triggering mechanism for your skill, and helps Codex understand when to use the skill.
-  - Include both what the Skill does and specific triggers/contexts for when to use it.
-  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Codex.
-  - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when Codex needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
-
-Do not include any other fields in YAML frontmatter.
-
-##### Body
-
-Write instructions for using the skill and its bundled resources.
-
-### Step 5: Validate the Skill
-
-Once development of the skill is complete, validate the skill folder to catch basic issues early:
-
-```bash
-scripts/quick_validate.py <path/to/skill-folder>
-```
-
-The validation script checks YAML frontmatter format, required fields, and naming rules. If validation fails, fix the reported issues and run the command again.
-
-### Step 6: Iterate
-
-After testing the skill, you may detect the skill is complex enough that it requires forward-testing; or users may request improvements.
-
-User testing often this happens right after using the skill, with fresh context of how the skill performed.
-
-**Forward-testing and iteration workflow:**
-
-1. Use the skill on real tasks
-2. Notice struggles or inefficiencies
-3. Identify how SKILL.md or bundled resources should be updated
-4. Implement changes and test again
-5. Forward-test if it is reasonable and appropriate
-
-## Forward-testing
-
-To forward-test, launch subagents as a way to stress test the skill with minimal context.
-Subagents should *not* know that they are being asked to test the skill.  They should be treated as
-an agent asked to perform a task by the user.  Prompts to subagents should look like:
-  `Use $skill-x at /path/to/skill-x to solve problem y`
-Not:
-  `Review the skill at /path/to/skill-x; pretend a user asks you to...`
-
-Decision rule for forward-testing:
-  - Err on the side of forward-testing
-  - Ask for approval if you think there's a risk that forward-testing would:
-    * take a long time,
-    * require additional approvals from the user, or
-    * modify live production systems
-
-  In these cases, show the user your proposed prompt and request (1) a yes/no decision, and
-  (2) any suggested modifictions.
-
-Considerations when forward-testing:
-   - use fresh threads for independent passes
-   - pass the skill, and a request in a similar way the user would.
-   - pass raw artifacts, not your conclusions
-   - avoid showing expected answers or intended fixes
-   - rebuild context from source artifacts after each iteration
-   - review the subagent's output and reasoning and emitted artifacts
-   - avoid leaving artifacts the agent can find on disk between iterations;
-     clean up subagents' artifacts to avoid additional contamination.
-
-If forward-testing only succeeds when subagents see leaked context, tighten the skill or the
-forward-testing setup before trusting the result.
+- [skill-authoring-guide.md](references/skill-authoring-guide.md) - Skill 结构详解、打包资源（scripts/references/assets）用途、渐进式披露设计模式与拆分模式、前向测试完整指南
+- [openai_yaml.md](references/openai_yaml.md) - agents/openai.yaml 字段定义与示例

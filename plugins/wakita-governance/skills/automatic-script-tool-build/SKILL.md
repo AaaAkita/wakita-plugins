@@ -34,7 +34,7 @@ ls launcher.py
 
 ### 1. 运行 build.py
 
-build.py 内部三步：清理旧 dist/build → PyInstaller 打包 → 拷贝 Playwright Chromium。
+build.py 内部三步：清理旧 dist/build -> PyInstaller 打包 -> 拷贝 Playwright Chromium。
 
 ```bash
 cd E:/software/AutomaticScriptTool && python build.py 2>&1 | tail -15
@@ -72,7 +72,7 @@ powershell -Command "Compress-Archive -Path 'AutomaticScriptTool-vX.Y' -Destinat
 ls -lh AutomaticScriptTool-vX.Y.zip    # 约 300MB
 ```
 
-**版本号约定**：用户说"打包一个 v2.3 版本" → 目录名 `AutomaticScriptTool-v2.3`，zip 名 `AutomaticScriptTool-v2.3.zip`。
+**版本号约定**：用户说"打包一个 v2.3 版本" -> 目录名 `AutomaticScriptTool-v2.3`，zip 名 `AutomaticScriptTool-v2.3.zip`。
 
 ## 产物结构
 
