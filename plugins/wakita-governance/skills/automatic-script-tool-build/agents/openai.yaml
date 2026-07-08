@@ -1,0 +1,4 @@
+interface:
+  display_name: "AutomaticScriptTool 打包构建"
+  short_description: "打包 AutomaticScriptTool 为可分发 Windows 程序（build.py/PyInstaller/版本号/zip）"
+  default_prompt: "打包一个 vX.X 版本"

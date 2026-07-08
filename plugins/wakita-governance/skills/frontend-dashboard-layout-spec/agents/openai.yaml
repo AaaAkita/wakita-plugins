@@ -1,0 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/OpenAPIJSONSchema/openapi-json-schema/refs/heads/main/schema.yaml
+display_name: Frontend Dashboard Layout Spec
+short_description: 【前端看板布局规范】看板页面 CSS 骨架：全屏填充 → flex 比例 → min-size 保底 → overflow 滚动兜底的三层策略
+default_prompt: 按照 Frontend Dashboard Layout Spec 的三层策略来布局这个看板页面，确保全屏填充、flex 比例分割、min-size 保底、overflow 滚动兜底。

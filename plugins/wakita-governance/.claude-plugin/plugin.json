@@ -1,0 +1,9 @@
+{
+  "name": "wakita-governance",
+  "version": "1.0.0",
+  "description": "管控插件：危险操作拦截（PreToolUse）、写操作留痕与提交规范（PostToolUse）、工作规范注入（UserPromptSubmit）、审计日志与文件加锁命令，内置子智能体与 skill 集合。",
+  "author": {
+    "name": "AaaAkita"
+  },
+  "homepage": "https://github.com/AaaAkita/wakita-plugins"
+}

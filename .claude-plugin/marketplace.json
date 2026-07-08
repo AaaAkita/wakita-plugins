@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "wakita-plugins",
+  "description": "Akita 自托管 ZCode 插件仓库 —— 危险操作拦截、代码规范与提交管控、子智能体行为约束",
+  "owner": {
+    "name": "AaaAkita"
+  },
+  "plugins": [
+    {
+      "name": "wakita-governance",
+      "description": "管控插件：PreToolUse 拦截危险命令与保护文件、PostToolUse 写操作留痕与提交规范、UserPromptSubmit 注入工作规范、提供 audit/lock 命令、内置子智能体与 skill 集合。",
+      "category": "security",
+      "source": "./plugins/wakita-governance"
+    }
+  ]
+}
