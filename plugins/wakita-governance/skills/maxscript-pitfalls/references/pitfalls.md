@@ -98,11 +98,6 @@ local theRow = dgv.Rows.Item i
 
 ### 2.1 `maxFilePath` vs `maxFileName`
 
-| 全局变量 | 内容 | 示例 |
-|---------|------|------|
-| `maxFilePath` | 仅目录路径（含末尾 `\`） | `E:\Project\` |
-| `maxFileName` | 仅文件名 | `scene.max` |
-
 ```maxscript
 -- ❌ 错误：保存后丢失文件名
 saveMaxFile maxFilePath quiet:true
@@ -264,13 +259,6 @@ case matClass of (
 ```
 
 ## 八、工作流检测（MR vs SG）
-
-| 材质类型 | MR 标志 | SG 标志 |
-|---------|---------|---------|
-| VRayMtl | `texmap_metalness` 存在，或 `metalness > 0` | 无 metalness 相关属性 |
-| PhysicalMaterial | 固定 MR | - |
-| Standardmaterial | 固定 SG | - |
-| CoronaMtl | `texmapMetallic` 存在 | 无 |
 
 ## 九、调试技巧
 

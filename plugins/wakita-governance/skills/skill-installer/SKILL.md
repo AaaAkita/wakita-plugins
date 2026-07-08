@@ -1,8 +1,6 @@
 ---
 name: skill-installer
 description: 从精选列表或 GitHub 仓库路径安装 ZCode skill 到 $ZCODE_HOME/skills。当用户要求列出可安装的 skill、安装精选 skill、或从其他仓库（包括私有仓库）安装 skill 时使用。
-metadata:
-  short-description: 从 openai/skills 或其他仓库安装精选 skill
 ---
 
 # Skill 安装器

@@ -4,12 +4,10 @@ description: |
   当用户正在编写、修改或调试 3ds Max MaxScript 脚本时，必须使用本 skill。
   本 skill 记录了 MaxScript 开发过程中踩过的坑和解决方案，
   涉及语法陷阱、API 差异、文件路径处理、材质贴图遍历等关键知识点。
-  适用于 rename_textures_v2.ms 等材质/贴图处理脚本的维护与迭代。
+  适用于所有 3ds Max MaxScript 脚本的编写、调试与维护。
 ---
 
 # MaxScript 踩坑记录
-
-本 skill 汇总 3ds Max MaxScript 开发中常见的陷阱与解决方案，覆盖语法、文件路径、材质贴图遍历、属性访问、文件操作、保存退出、材质类型判断、工作流检测、调试等关键知识点。详细的分类示例库（含代码片段与报错信息）见 `references/pitfalls.md`。
 
 ## 核心规则
 
