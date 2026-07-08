@@ -1,5 +1,5 @@
 ---
-name: "code-explorer"
+name: "wakita-scout"
 description: "代码库探索专家（DeepSeek 驱动）。在编码前深入探索项目现有结构，定位相似功能、架构模式、依赖关系和集成点。只读不改，输出带文件行号的探索报告供主智能体(GLM)做架构决策。"
 color: blue
 model: "custom:466f2f41-bacb-4168-b493-d0afa32a0357:deepseek-v4-flash"
