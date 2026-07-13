@@ -17,7 +17,7 @@ _NORMS = """\
 3. 找不到证据明说"未找到"，不臆测。
 4. 危险操作（rm -rf / 强推 / DROP 等）会被自动拦截。
 5. 分支合并至主干后可复盘：有无可复用方案值得沉淀为 skill。
-6. 复杂任务可先探索（wakita-scout）再实现（wakita-builder），最后审查（wakita-auditor）。"""
+6. 接到代码改动需求时，按 using-wakita 技能分级再动手（小/中/大），禁止未经分级直接开干。"""
 
 # 打包关键词 → 场景提示
 _PACK_KEYWORDS = [
