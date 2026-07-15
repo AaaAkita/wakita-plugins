@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "wakita-plugins",
-  "description": "Akita 自托管 ZCode 插件仓库 —— 危险操作拦截、代码规范与提交管控、子智能体行为约束",
+  "description": "Akita 自托管 ZCode 插件仓库 —— 双插件架构：管控核心（行为约束）+ 开发工具包（领域 skill）",
   "owner": {
     "name": "AaaAkita"
   },
@@ -11,9 +11,19 @@
   "plugins": [
     {
       "name": "wakita-governance",
-      "description": "管控插件：PreToolUse 拦截危险命令与保护文件、PostToolUse 写操作留痕与提交规范、UserPromptSubmit 注入工作规范、提供 audit/lock 命令、内置子智能体与 skill 集合。",
+      "description": "管控核心（v2.0.0）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder）、audit/lock 命令、using-wakita skill。",
       "category": "security",
       "source": "./plugins/wakita-governance",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    },
+    {
+      "name": "wakita-toolkit",
+      "description": "开发工具包（v1.0.0）：13 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包等），可按需独立开关，与 wakita-governance 互补。",
+      "category": "development",
+      "source": "./plugins/wakita-toolkit",
       "policy": {
         "installation": "AVAILABLE",
         "authentication": "ON_INSTALL"

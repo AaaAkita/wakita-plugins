@@ -1,0 +1,9 @@
+{
+  "name": "wakita-toolkit",
+  "version": "1.0.0",
+  "description": "开发工具包：领域 skill 集合（数据库、Docker、测试、代码复用、前端规范等），可按需独立开关。与 wakita-governance 互补，不依赖。",
+  "author": {
+    "name": "AaaAkita"
+  },
+  "homepage": "https://github.com/AaaAkita/wakita-plugins"
+}
