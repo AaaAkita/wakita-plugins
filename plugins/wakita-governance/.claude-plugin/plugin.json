@@ -1,6 +1,6 @@
 {
   "name": "wakita-governance",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder）+ audit/lock 命令。领域 skill 已拆分至 wakita-toolkit 插件。",
   "author": {
     "name": "AaaAkita"
