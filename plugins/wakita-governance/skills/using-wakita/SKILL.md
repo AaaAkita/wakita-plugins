@@ -199,3 +199,12 @@ grep -r "from.*models.*import.*User" api/ --include="*.py" | wc -l  # API 引用
 3. **scout 报告回来后，重新定级**。有时你以为是大任务，scout 展示了现成模式其实很小——可以降级自己做。
 4. **GLM 做架构决策，builder 不决策**。Spec 出自你手，builder 只执行。如果 builder 发现 spec 有问题，它报告，你决策。
 5. **auditor 发现问题必须修复**。不会自动忽视，除非 auditor 明确说"误报"。
+
+### 验证工具分工
+
+| 工具类型 | 工具 | 特点 | 谁跑 |
+|----------|------|------|------|
+| **只报错不改文件** | `pytest`、`mypy`、`npm run build`、`tsc --noEmit`、`eslint` | 有问题报错，不动代码 | builder 可全量跑 |
+| **会改文件** | `black`、`isort`、`prettier`、`pre-commit` | 自动格式化/修复，改了就 diff 异常 | 仅主 agent 跑 |
+
+**原则**：builder 的硬约束是"不碰 spec 外文件"，所以只有不产生副作用的工具才能让 builder 跑。`black`/`isort`/`pre-commit` 等会改文件的工具，必须在 builder 交付后由主 agent 统一处理。
