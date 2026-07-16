@@ -1,6 +1,6 @@
 ---
 name: docker-expert
-description: 提供 Docker 构建缓存复用、部署规范审查、多环境配置及问题诊断。涵盖 BuildKit 缓存挂载、镜像优化、Compose 编排与生产可靠性最佳实践。触发词：docker build、构建镜像、构建太慢、构建缓存、Dockerfile、docker-compose、容器化、前端容器化、Vite dev server、HMR 不生效、docker buildx、构建卡住。
+description: 提供 Docker 构建缓存复用、部署规范审查、多环境配置及问题诊断。涵盖 BuildKit 缓存挂载、镜像优化、Compose 编排、镜像源测试与超时优化。触发词：docker build、构建镜像、构建太慢、构建缓存、Dockerfile、docker-compose、容器化、前端容器化、Vite dev server、HMR 不生效、docker buildx、构建卡住、镜像源、pull timeout、拉取超时。
 ---
 
 # Docker 专家技能 (Docker Expert Skill)
@@ -65,6 +65,133 @@ Docker 构建有**双层缓存**：
 ## 五、进阶可靠性
 
 健康检查（`HEALTHCHECK`）、时区同步（`Asia/Shanghai`）、优雅停机（响应 `SIGTERM`）、日志外发（`stdout/stderr`）、重启策略（`restart: unless-stopped`），详见 `references/deployment-guide.md`。
+
+## 六、镜像源优化与超时管理
+
+### 镜像源测试
+
+**问题**：国内网络访问 Docker Hub 不稳定，拉取镜像慢或超时。
+
+**解决方案**：先测试镜像源可用性，再配置最优源。
+
+```bash
+# 运行镜像源测试脚本
+bash scripts/test-docker-mirrors.sh
+```
+
+**脚本功能**：
+- 测试官方源 + 9 个国内镜像源的连通性
+- 测量每个源的响应速度（ms）
+- 按速度排序输出可用镜像源
+- 生成 daemon.json 配置推荐
+
+**测试结果示例**：
+```
+可用镜像源（按响应速度排序）：
+
+  ✓ 阿里云
+    地址: registry.cn-hangzhou.aliyuncs.com
+    响应: 156ms | 速度评级: 极快
+
+  ✓ 腾讯云
+    地址: mirror.ccs.tencentyun.com
+    响应: 203ms | 速度评级: 快
+```
+
+**配置方法**：将测试结果中最快的 3 个源添加到 Docker daemon 配置：
+
+```json
+{
+  "registry-mirrors": [
+    "https://registry.cn-hangzhou.aliyuncs.com",
+    "https://mirror.ccs.tencentyun.com",
+    "https://docker.mirrors.ustc.edu.cn"
+  ]
+}
+```
+
+### 镜像大小预估与超时设置
+
+**问题**：大型镜像拉取时间长，默认超时导致拉取中断。
+
+**解决方案**：预估镜像大小，根据网速计算合理超时时间。
+
+```bash
+# 预估镜像拉取时间
+bash scripts/estimate-pull-time.sh nginx:latest
+bash scripts/estimate-pull-time.sh python:3.11-slim
+bash scripts/estimate-pull-time.sh pytorch/pytorch:latest
+```
+
+**脚本功能**：
+- 测试当前网络速度（MB/s）和延迟（ms）
+- 获取目标镜像大小
+- 预估拉取时间
+- 推荐超时设置（预估时间 × 2）
+- 生成 Docker Compose 超时配置示例
+
+**预估结果示例**：
+```
+预估结果：
+
+  镜像大小:         187 MB
+  当前网速:         2.5 MB/s
+  网络延迟:         45 ms
+  预估拉取时间:     75 秒
+  推荐超时时间:     150 秒
+```
+
+**超时配置**：
+
+```yaml
+# docker-compose.yml
+services:
+  app:
+    image: nginx:latest
+    deploy:
+      restart_policy:
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 150s
+      retries: 3
+      start_period: 60s
+```
+
+**环境变量设置**：
+```bash
+# Linux/macOS
+export DOCKER_CLIENT_TIMEOUT=150
+export COMPOSE_HTTP_TIMEOUT=150
+
+# Windows (PowerShell)
+$env:DOCKER_CLIENT_TIMEOUT="150"
+$env:COMPOSE_HTTP_TIMEOUT="150"
+```
+
+### 常见镜像大小参考
+
+| 镜像 | 大小 | 预估拉取时间（2MB/s） |
+|------|------|----------------------|
+| hello-world | 13 KB | <1 秒 |
+| alpine:3.19 | 7 MB | 4 秒 |
+| node:20-slim | 90 MB | 45 秒 |
+| python:3.11-slim | 130 MB | 65 秒 |
+| nginx:latest | 187 MB | 94 秒 |
+| ubuntu:22.04 | 77 MB | 39 秒 |
+| postgres:16 | 410 MB | 205 秒 |
+| pytorch/pytorch:latest | 2.3 GB | 19 分钟 |
+
+### 最佳实践
+
+1. **先测试再配置**：使用 `test-docker-mirrors.sh` 测试当前网络环境
+2. **预估再拉取**：使用 `estimate-pull-time.sh` 预估大型镜像拉取时间
+3. **配置多个源**：daemon.json 配置 3 个以上镜像源作为备用
+4. **合理设置超时**：大型镜像超时设置为预估时间的 2 倍
+5. **定期测试**：网络环境变化时重新测试镜像源
 
 ## 六、交互准则
 
