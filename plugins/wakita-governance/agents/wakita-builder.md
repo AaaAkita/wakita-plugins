@@ -2,7 +2,7 @@
 name: "wakita-builder"
 description: "代码实现专家（DeepSeek 驱动）。严格按主智能体(GLM)提供的 Spec/Plan 实现代码，不自行扩展需求。改动后必须自跑验证（build/test/lint），未通过不得交付。必要时生成配套单元测试。遇 spec 与实际不符时停止并报告，不自行发挥。"
 color: green
-model: "custom:4ac42331-ab02-43aa-96d3-7a884b97d204:deepseek-v4-flash"
+model: "custom:466f2f41-bacb-4168-b493-d0afa32a0357:deepseek-v4-flash"
 tools:
   - Read
   - Write

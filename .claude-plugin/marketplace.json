@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "wakita-governance",
-      "description": "管控核心（v2.0.2）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder）、audit/lock 命令、using-wakita skill。",
+      "description": "管控核心（v2.0.3）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder）、audit/lock 命令、using-wakita skill。",
       "category": "security",
       "source": "./plugins/wakita-governance",
       "policy": {
