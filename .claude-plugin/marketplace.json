@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "wakita-governance",
-      "description": "管控核心（v2.0.3）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder）、audit/lock 命令、using-wakita skill。",
+      "description": "管控核心（v2.0.5）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议）、audit/lock/submodel 命令、using-wakita skill、inject-agent-model.py 交互式模型切换脚本。",
       "category": "security",
       "source": "./plugins/wakita-governance",
       "policy": {
@@ -21,7 +21,7 @@
     },
     {
       "name": "wakita-toolkit",
-      "description": "开发工具包（v1.1.0）：15 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包/合规检查/迁移收敛等），可按需独立开关，与 wakita-governance 互补。",
+      "description": "开发工具包（v1.2.0）：15 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包/合规检查/迁移收敛等），可按需独立开关。集成智谱 MCP（联网搜索/网页读取/图像理解），与 wakita-governance 互补。",
       "category": "development",
       "source": "./plugins/wakita-toolkit",
       "policy": {

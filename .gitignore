@@ -12,6 +12,7 @@ audit.log
 .DS_Store
 Thumbs.db
 desktop.ini
+.zcode/plans/
 
 # 编辑器
 .vscode/

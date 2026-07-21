@@ -1,7 +1,7 @@
 {
   "name": "wakita-governance",
-  "version": "2.0.3",
-  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder）+ audit/lock 命令。领域 skill 已拆分至 wakita-toolkit 插件。",
+  "version": "2.0.5",
+  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议）+ audit/lock/submodel 命令。配套 inject-agent-model.py 脚本支持交互式切换子智能体模型。领域 skill 已拆分至 wakita-toolkit 插件。",
   "author": {
     "name": "AaaAkita"
   },
