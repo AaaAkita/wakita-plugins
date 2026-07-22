@@ -107,6 +107,11 @@ def load_providers(cfg_path: Path) -> dict:
             }
         return {}
 
+    def _has_api_key(options: dict) -> bool:
+        """Check if a provider's options contain a non-empty API key."""
+        api_key = options.get("apiKey", "")
+        return bool(api_key) and api_key != "None"
+
     unified: dict = {}
 
     if isinstance(provider_field, dict):
@@ -114,9 +119,13 @@ def load_providers(cfg_path: Path) -> dict:
         for key, val in provider_field.items():
             if not isinstance(val, dict):
                 continue
+            opts = val.get("options", {})
+            enabled = bool(val.get("enabled", False))
+            has_key = _has_api_key(opts)
             unified[key] = {
                 "name": val.get("name", key),
-                "enabled": bool(val.get("enabled", False)),
+                "enabled": enabled,
+                "usable": enabled and has_key,
                 "models": _normalize_models(val.get("models", {})),
             }
 
@@ -129,9 +138,13 @@ def load_providers(cfg_path: Path) -> dict:
             key = item.get("key") or item.get("id") or item.get("name")
             if not key:
                 continue
+            opts = item.get("options", {})
+            enabled = bool(item.get("enabled", False))
+            has_key = _has_api_key(opts)
             unified[str(key)] = {
                 "name": item.get("name", str(key)),
-                "enabled": bool(item.get("enabled", False)),
+                "enabled": enabled,
+                "usable": enabled and has_key,
                 "models": _normalize_models(item.get("models", {})),
             }
 
@@ -145,40 +158,66 @@ def load_providers(cfg_path: Path) -> dict:
     return unified
 
 
-def list_providers(providers: dict) -> None:
-    """Print all providers and their models in a readable table."""
-    print(f"{'Provider Key':<48} {'Name':<30} {'Enabled':<8} {'#Models':<8}")
-    print("-" * 98)
-    for key, info in providers.items():
+def list_providers(providers: dict, include_disabled: bool = False) -> None:
+    """Print providers and their models in a readable table.
+
+    By default only usable providers are shown (enabled + non-empty API key).
+    Providers that are enabled but lack an API key are excluded since they
+    can't actually be used. Pass include_disabled=True to show all.
+    """
+    shown = providers if include_disabled else {
+        k: v for k, v in providers.items() if v.get("usable")
+    }
+    if not shown:
+        print("(no usable providers; run with --all to see all providers)")
+        return
+    print(f"{'Provider Key':<48} {'Name':<30} {'Usable':<7} {'Enabled':<8} {'#Models':<8}")
+    print("-" * 105)
+    for key, info in shown.items():
         name = str(info.get("name", "?"))[:29]
+        usable = "✓" if info.get("usable") else " "
         enabled = "✓" if info.get("enabled") else " "
         n = len(info.get("models", {}))
-        print(f"{key:<48} {name:<30} {enabled:<8} {n:<8}")
+        print(f"{key:<48} {name:<30} {usable:<7} {enabled:<8} {n:<8}")
         # Show model ids indented
         for mid in info.get("models", {}).keys():
             print(f"  model: {mid}")
 
 
-def print_providers_json(providers: dict) -> None:
+def print_providers_json(providers: dict, include_disabled: bool = False) -> None:
     """Print providers as JSON for command/slash-command consumption.
+
+    By default only usable providers are returned (enabled + non-empty API key),
+    so the /submodel picker only offers providers the user can actually use.
+    Pass include_disabled=True to return all.
 
     Output schema:
     {
       "providers": [
-        { "key": str, "name": str, "enabled": bool, "models": [str, ...] },
+        {
+          "key": str,
+          "name": str,
+          "enabled": bool,
+          "usable": bool,
+          "models": [str, ...]
+        },
         ...
       ]
     }
     """
+    shown = providers if include_disabled else {
+        k: v for k, v in providers.items() if v.get("usable")
+    }
     out = {
         "providers": [
             {
                 "key": key,
                 "name": str(info.get("name", key)),
                 "enabled": bool(info.get("enabled", False)),
+                "usable": bool(info.get("usable", False)),
                 "models": list(info.get("models", {}).keys()),
             }
-            for key, info in providers.items()
+            for key, info in shown.items()
         ]
     }
     print(json.dumps(out, ensure_ascii=False, indent=2))
@@ -295,8 +334,9 @@ def main() -> int:
     parser.add_argument("--provider", default=DEFAULT_PROVIDER, help=f"Provider key (default: {DEFAULT_PROVIDER})")
     parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Model id (default: {DEFAULT_MODEL})")
     parser.add_argument("--version", help="Target a specific installed version (e.g. 2.0.4)")
-    parser.add_argument("--list", action="store_true", help="List all providers and models (human-readable), then exit")
-    parser.add_argument("--json", action="store_true", help="List all providers and models as JSON, then exit (for slash command)")
+    parser.add_argument("--list", action="store_true", help="List all usable providers and models (enabled + non-empty API key), human-readable, then exit")
+    parser.add_argument("--json", action="store_true", help="List all usable providers and models as JSON, then exit (for slash command)")
+    parser.add_argument("--all", action="store_true", help="Include disabled/no-key providers in --list/--json output")
     parser.add_argument("--apply", action="store_true", help="Actually write the change; without this flag, --provider/--model only validate and print what would happen")
     args = parser.parse_args()
 
@@ -305,11 +345,11 @@ def main() -> int:
     # ---- read-only modes: --list / --json ----
     if args.json:
         # Structured output for slash command consumption.
-        print_providers_json(providers)
+        print_providers_json(providers, include_disabled=args.all)
         return 0
 
     if args.list:
-        list_providers(providers)
+        list_providers(providers, include_disabled=args.all)
         return 0
 
     # ----------------------------- sanity: provider/model non-empty -----------------------------

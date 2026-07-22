@@ -25,20 +25,29 @@ description: 交互式切换 wakita-governance 三个子智能体（scout/audito
 python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --json
 ```
 
+	**默认只返回可用（`enabled: true` 且 API Key 非空）的 provider**。状态为 `enabled: true` 但未填写 API Key 的 provider（如 GLM 官方、Z.ai 等内置 provider）会自动排除，避免用户选了实际无法调用的 provider。若用户明确要看全部（含不可用的），加 `--all`：
+
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --json --all
+```
+
 输出为 JSON，schema：
 
-```json
-{
-  "providers": [
-    {
-      "key": "466f2f41-bacb-4168-b493-d0afa32a0357",
-      "name": "DeepSeek",
-      "enabled": true,
-      "models": ["deepseek-v4-flash", "deepseek-v4-pro"]
-    }
-  ]
-}
-```
+	```json
+	{
+	  "providers": [
+	    {
+	      "key": "466f2f41-bacb-4168-b493-d0afa32a0357",
+	      "name": "DeepSeek",
+	      "enabled": true,
+	      "usable": true,
+	      "models": ["deepseek-v4-flash", "deepseek-v4-pro"]
+	    }
+	  ]
+	}
+	```
+
+	> 💡 默认过滤「可用 provider」= `enabled: true` **且** API Key 非空。部分内置 provider（GLM 官方、Z.ai 等）虽然 `enabled: true` 但未填入 API Key，用户选了也无法调用，因此默认隐藏。直连模式（`/submodel <provider> <model>`）不经过此过滤，仍可注入任意 config.json 中存在的 provider，便于高级用户切换到刚开通但尚未重启客户端的 provider。不可用 provider 可通过 `--all` 查看。
 
 ### 2. 展示给用户选择
 
@@ -46,11 +55,13 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --json
 
 **第一步：选 provider**
 
-用 `AskUserQuestion`，把 JSON 里的 provider 列表做成选项。选项 label 用 `name`（如 "DeepSeek"），description 里标注 `enabled` 状态和 model 数量。例如：
+	用 `AskUserQuestion`，把 JSON 里的 provider 列表做成选项。由于第 1 步默认已过滤掉不可用项（未启用或无 API Key），这里展示的都是可用 provider，选项 label 用 `name`（如 "DeepSeek"），description 里标注 model 数量。例如：
 
-- "DeepSeek" - "已启用 · 2 个模型（deepseek-v4-flash, deepseek-v4-pro）"
-- "Kimi" - "未启用 · 1 个模型"
-- "火山引擎" - "已启用 · 5 个模型"
+- "DeepSeek" - "2 个模型（deepseek-v4-flash, deepseek-v4-pro）"
+- "Bigmodel - API Key" - "2 个模型（GLM-5.2, GLM-5-Turbo）"
+- "火山引擎公司" - "2 个模型"
+
+	如果列表为空或用户想选的 provider 不在列表中（例如刚开通还没重启客户端，或已启用但未填 API Key），提示用户：可在 ZCode 客户端填入 API Key 并启用对应 provider 后重试，或用 `--all` 查看全部 provider，或改用直连模式 `/submodel <provider> <model>`（需用户已知 provider key）。
 
 **第二步：选 model**
 
@@ -144,12 +155,11 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --provider <key> --
 ```
 用户: /submodel
 
-[主智能体读取 --json，展示 provider 列表]
-主智能体: 发现 12 个 provider，请选择：
-  - DeepSeek（已启用，2 个模型）
-  - Kimi（未启用，1 个模型）
-  - 火山引擎（已启用，5 个模型）
-  ...
+[主智能体读取 --json，展示可用的 provider 列表（已启用且有 API Key）]
+主智能体: 发现 2 个可用的 provider，请选择：
+  - DeepSeek（2 个模型）
+  - 火山引擎公司（2 个模型）
+（Bigmodel - API Key 已启用但未配置 API Key，已被自动过滤）
 
 用户: DeepSeek
 

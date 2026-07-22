@@ -16,8 +16,11 @@ wakita-governance 的三个子智能体（scout / auditor / builder）在 agent 
 ## 用法
 
 ```bash
-# 列出所有可用 provider 和 model
+# 列出所有可用的 provider 和 model（默认排除不可用项：未启用 / 无 API Key）
 python scripts/inject-agent-model.py --list
+
+# 含不可用的 provider 一起列出（排查 "为什么看不到某 provider" 时用）
+python scripts/inject-agent-model.py --list --all
 
 # 默认 DeepSeek deepseek-v4-flash（与插件发布时的 frontmatter 一致，幂等无感）
 python scripts/inject-agent-model.py
@@ -29,6 +32,8 @@ python scripts/inject-agent-model.py --provider "builtin:bigmodel-coding-plan" -
 python scripts/inject-agent-model.py --version 2.0.4
 ```
 
+> 💡 **关于可用性过滤**：`--list` / `--json` 默认只返回「可用」的 provider（`enabled: true` **且** API Key 非空）。ZCode 客户端里部分内置 provider（GLM 官方、Z.ai 等）虽然 `enabled: true` 但未填入 API Key，会被隐藏，避免用户选了无法调用的 provider。直连模式（`--provider <key> --model <id>`）不走此过滤，仍可注入任意 config.json 中存在的 provider，便于切换到刚开通但尚未重启客户端的 provider。需要查看全部 provider（含不可用的）时加 `--all`。
+
 ## 参数
 
 | 参数 | 默认值 | 说明 |
@@ -36,7 +41,11 @@ python scripts/inject-agent-model.py --version 2.0.4
 | `--provider` | `466f2f41-bacb-4168-b493-d0afa32a0357`（DeepSeek） | config.json 中 `provider.<key>` 的 `<key>` |
 | `--model` | `deepseek-v4-flash` | 所选 provider 下 `models.<key>` 的 `<key>` |
 | `--version` | 自动探测最新 x.y.z | 指定插件安装版本目录 |
-| `--list` | - | 列出所有 provider+model 后退出 |
+| `--list` | - | 列出可用 provider+model 后退出（人类可读表格，仅显示 `enabled: true` 且 API Key 非空的 provider） |
+| `--json` | - | 列出可用 provider+model 后退出（JSON，供 `/submodel` 命令解析） |
+| `--all` | - | `--list`/`--json` 时连同不可用（未启用 / 无 API Key）的 provider 一起列出 |
+
+Provider key 中的 `:` 会被自动 URL 编码为 `%3A`（如 `builtin:bigmodel-coding-plan` -> `builtin%3Abigmodel-coding-plan`），最终写入值形如 `model: "custom:builtin%3Abigmodel-coding-plan:GLM-5.2"`。
 
 Provider key 中的 `:` 会被自动 URL 编码为 `%3A`（如 `builtin:bigmodel-coding-plan` -> `builtin%3Abigmodel-coding-plan`），最终写入值形如 `model: "custom:builtin%3Abigmodel-coding-plan:GLM-5.2"`。
 

@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "wakita-governance",
-      "description": "管控核心（v2.0.5）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议）、audit/lock/submodel 命令、using-wakita skill、inject-agent-model.py 交互式模型切换脚本。",
+      "description": "管控核心（v2.1.0）：PreToolUse 危险拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议）、audit/lock/submodel 命令、using-wakita skill、inject-agent-model.py 交互式模型切换脚本。",
       "category": "security",
       "source": "./plugins/wakita-governance",
       "policy": {
