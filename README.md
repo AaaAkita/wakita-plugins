@@ -15,10 +15,8 @@ wakita-plugins
 │   ├── 1 个 skill（using-wakita）
 │   └── scripts（inject-agent-model.py 子智能体模型切换）
 │
-└── wakita-toolkit（开发工具包 v1.2.0）     ← 领域知识层
-    ├── 智谱 MCP（联网搜索 / 网页读取 / 图像理解）
-    ├── scripts（inject-mcp-token.py token 注入）
-    └── 15 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
+	└── wakita-toolkit（开发工具包 v1.2.1）     ← 领域知识层
+	    └── 15 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
 ```
 
 两个插件**独立安装、独立维护、独立开关**，互不依赖。
@@ -103,16 +101,6 @@ python plugins/wakita-governance/scripts/inject-agent-model.py --json
 
 ### wakita-toolkit - 开发工具包
 
-#### 🌐 智谱 MCP 服务（3 个）
-
-| MCP 服务 | 类型 | 作用 |
-|----------|------|------|
-| `zai-web-search` | http | 联网搜索（智谱 web_search_prime） |
-| `zai-web-page-reading` | http | 网页内容读取（智谱 web_reader） |
-| `zai-visual-understanding` | stdio | 图像/视频/图表理解（需 npx + Node.js） |
-
-ZCode 不展开 MCP 配置中的环境变量，token 需通过 `scripts/inject-mcp-token.py` 注入。token 未配置时 skill 自动降级，不阻塞工作。
-
 #### 📚 内置 skill（15 个）
 
 | Skill | 用途 |
@@ -169,12 +157,10 @@ wakita-plugins/
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock 命令
 │   │   └── scripts/               # inject-agent-model.py
-│   └── wakita-toolkit/            # 开发工具包 v1.2.0
-│       ├── .claude-plugin/
-│       │   └── plugin.json
-│       ├── .mcp.json              # 智谱 MCP（搜索/网页/图像）
-│       ├── scripts/               # inject-mcp-token.py
-│       └── skills/                # 15 个领域 skill
+	│   └── wakita-toolkit/            # 开发工具包 v1.2.1
+	│       ├── .claude-plugin/
+	│       │   └── plugin.json
+	│       └── skills/                # 15 个领域 skill
 ├── docs/                          # 操作手册
 └── README.md
 ```

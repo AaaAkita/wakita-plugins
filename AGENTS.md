@@ -18,10 +18,8 @@ wakita-plugins/
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock 命令
 │   │   └── scripts/                  # inject-agent-model.py 子智能体模型切换
-│   └── wakita-toolkit/               # 开发工具包（v1.2.0）
-│       ├── .mcp.json                 # 智谱 MCP（联网搜索/网页读取/图像理解）
-│       ├── scripts/                  # inject-mcp-token.py token 注入
-│       └── skills/                   # 15 个领域 skill（见下文）
+	│   └── wakita-toolkit/               # 开发工具包（v1.2.1）
+	│       └── skills/                   # 15 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
@@ -54,9 +52,9 @@ wakita-plugins/
 
 - `scripts/inject-agent-model.py` - 切换三个子智能体的 `model:` 字段。ZCode 不展开 agent frontmatter 里的环境变量，用户安装后若想换 provider/model 需跑此脚本。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.2.0）
+## 插件二：wakita-toolkit（开发工具包，v1.2.1）
 
-领域 skill 集合，可按需独立开关。集成智谱 MCP 服务（联网搜索/网页读取/图像理解），skill 在需要时可调用 MCP 联网查证，token 未配置时自动降级。
+领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
 ### 内置 skill（15 个）
 
