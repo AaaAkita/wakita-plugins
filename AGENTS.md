@@ -19,7 +19,7 @@ wakita-plugins/
 │   │   ├── commands/                 # audit / lock 命令
 │   │   └── scripts/                  # inject-agent-model.py 子智能体模型切换
 	│   └── wakita-toolkit/               # 开发工具包（v1.2.1）
-	│       └── skills/                   # 15 个领域 skill（见下文）
+	│       └── skills/                   # 16 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
@@ -56,7 +56,7 @@ wakita-plugins/
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
-### 内置 skill（15 个）
+### 内置 skill（16 个）
 
 | Skill | 用途 |
 |-------|------|
@@ -68,6 +68,7 @@ wakita-plugins/
 | `mysql-expert` | MySQL 数据库设计/SQL 优化 |
 | `operate-through-channels` | 通过正确渠道修复：修代码不修数据 / 公开接口操作 / 端到端验证 |
 | `plugin-creator` | 创建/脚手架 ZCode 插件 |
+| `project-baseline` | 项目基线检查（10 项最低交付底线） |
 | `project-compliance-check` | 项目合规筛查（28 项生产前检查） |
 | `pyinstaller-packaging` | Python 项目打包 .exe |
 | `robust-architecture` | 分层架构/API 规范/目录结构 |
