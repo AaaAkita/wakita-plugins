@@ -18,7 +18,7 @@ wakita-plugins/
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock 命令
 │   │   └── scripts/                  # inject-agent-model.py 子智能体模型切换
-	│   └── wakita-toolkit/               # 开发工具包（v1.2.1）
+	│   └── wakita-toolkit/               # 开发工具包（v1.2.2）
 	│       └── skills/                   # 16 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
@@ -52,7 +52,7 @@ wakita-plugins/
 
 - `scripts/inject-agent-model.py` - 切换三个子智能体的 `model:` 字段。ZCode 不展开 agent frontmatter 里的环境变量，用户安装后若想换 provider/model 需跑此脚本。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.2.1）
+## 插件二：wakita-toolkit（开发工具包，v1.2.2）
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 

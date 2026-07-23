@@ -21,7 +21,7 @@
     },
     {
       "name": "wakita-toolkit",
-	      "description": "开发工具包（v1.2.1）：16 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包/基线检查/合规检查/迁移收敛等），可按需独立开关。与 wakita-governance 互补，不依赖外部 MCP 服务。",
+	      "description": "开发工具包（v1.2.2）：16 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包/基线检查/合规检查/迁移收敛等），可按需独立开关。与 wakita-governance 互补，不依赖外部 MCP 服务。",
       "category": "development",
       "source": "./plugins/wakita-toolkit",
       "policy": {

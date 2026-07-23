@@ -15,7 +15,7 @@ wakita-plugins
 │   ├── 1 个 skill（using-wakita）
 │   └── scripts（inject-agent-model.py 子智能体模型切换）
 │
-    └── wakita-toolkit（开发工具包 v1.2.1）     ← 领域知识层
+    └── wakita-toolkit（开发工具包 v1.2.2）     ← 领域知识层
         └── 16 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
 ```
 
@@ -158,7 +158,7 @@ wakita-plugins/
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock 命令
 │   │   └── scripts/               # inject-agent-model.py
-	│   └── wakita-toolkit/            # 开发工具包 v1.2.1
+	│   └── wakita-toolkit/            # 开发工具包 v1.2.2
 	│       ├── .claude-plugin/
 	│       │   └── plugin.json
         │       └── skills/                # 16 个领域 skill
