@@ -15,8 +15,8 @@ wakita-plugins
 │   ├── 1 个 skill（using-wakita）
 │   └── scripts（inject-agent-model.py 子智能体模型切换）
 │
-    └── wakita-toolkit（开发工具包 v1.3.0）     ← 领域知识层
-        └── 20 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
+    └── wakita-toolkit（开发工具包 v1.3.1）     ← 领域知识层
+        └── 21 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
 ```
 
 两个插件**独立安装、独立维护、独立开关**，互不依赖。
@@ -101,11 +101,12 @@ python plugins/wakita-governance/scripts/inject-agent-model.py --json
 
 ### wakita-toolkit - 开发工具包
 
-#### 📚 内置 skill（20 个）
+#### 📚 内置 skill（21 个）
 
 | Skill | 用途 |
 |-------|------|
 | `chinese-commit-messages` | git commit message 强制中文 |
+| `code-annotation` | 代码输出中文标注（变量名/函数名首次出现处附加翻译） |
 | `code-reuse-audit` | 代码冗余审查与重构 |
 | `docker-compose-prod-default` | Docker Compose 生产/开发默认语义规范 |
 | `docker-expert` | Docker 构建/部署最佳实践（含镜像源测试、超时预估） |
@@ -162,10 +163,10 @@ wakita-plugins/
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock 命令
 │   │   └── scripts/               # inject-agent-model.py
-	│   └── wakita-toolkit/            # 开发工具包 v1.3.0
+	│   └── wakita-toolkit/            # 开发工具包 v1.3.1
 	│       ├── .claude-plugin/
 	│       │   └── plugin.json
-        │       └── skills/                # 20 个领域 skill
+        │       └── skills/                # 21 个领域 skill
 ├── docs/                          # 操作手册
 └── README.md
 ```
