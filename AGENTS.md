@@ -18,8 +18,8 @@ wakita-plugins/
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock 命令
 │   │   └── scripts/                  # inject-agent-model.py 子智能体模型切换
-	│   └── wakita-toolkit/               # 开发工具包（v1.2.2）
-	│       └── skills/                   # 16 个领域 skill（见下文）
+	│   └── wakita-toolkit/               # 开发工具包（v1.3.0）
+	│       └── skills/                   # 20 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
@@ -52,21 +52,25 @@ wakita-plugins/
 
 - `scripts/inject-agent-model.py` - 切换三个子智能体的 `model:` 字段。ZCode 不展开 agent frontmatter 里的环境变量，用户安装后若想换 provider/model 需跑此脚本。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.2.2）
+## 插件二：wakita-toolkit（开发工具包，v1.3.0）
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
-### 内置 skill（16 个）
+### 内置 skill（20 个）
 
 | Skill | 用途 |
 |-------|------|
 | `chinese-commit-messages` | git commit message 强制中文 |
 | `code-reuse-audit` | 代码冗余审查与重构 |
+| `docker-compose-prod-default` | Docker Compose 生产/开发默认语义规范 |
 | `docker-expert` | Docker 构建/部署最佳实践（含镜像源测试、超时预估） |
 | `frontend-dashboard-layout-spec` | 看板类页面 CSS 布局规范 |
 | `maxscript-pitfalls` | 3ds Max MaxScript 坑点指南 |
 | `mysql-expert` | MySQL 数据库设计/SQL 优化 |
+| `one-way-sync-antipattern` | 单向同步反模式审查（设计 vs 实现偏差检测） |
 | `operate-through-channels` | 通过正确渠道修复：修代码不修数据 / 公开接口操作 / 端到端验证 |
+| `param-refactor-semantic-audit` | 参数统一改造逐点语义审查（防机械批量加参数回归） |
+| `playwright-cookie-injection-pitfalls` | Playwright add_cookies 持久化陷阱与修复 |
 | `plugin-creator` | 创建/脚手架 ZCode 插件 |
 | `project-baseline` | 项目基线检查（10 项最低交付底线） |
 | `project-compliance-check` | 项目合规筛查（28 项生产前检查） |
