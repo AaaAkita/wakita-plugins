@@ -6,7 +6,7 @@ Akita 自托管的 ZCode 插件仓库 —— 双插件架构，管控与工具�
 
 ```
 wakita-plugins
-├── wakita-governance（管控核心 v2.1.0）    ← 行为约束层
+├── wakita-governance（管控核心 v2.2.0）    ← 行为约束层
 │   ├── 危险操作拦截（PreToolUse）
 │   ├── 审计留痕（PostToolUse）
 │   ├── 工作规范注入（UserPromptSubmit）
@@ -15,7 +15,7 @@ wakita-plugins
 │   ├── 1 个 skill（using-wakita）
 │   └── scripts（inject-agent-model.py 子智能体模型切换）
 │
-    └── wakita-toolkit（开发工具包 v1.3.1）     ← 领域知识层
+    └── wakita-toolkit（开发工具包 v1.4.0）     ← 领域知识层
         └── 21 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
 ```
 
@@ -155,7 +155,7 @@ wakita-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json           # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/         # 管控核心 v2.1.0
+│   ├── wakita-governance/         # 管控核心 v2.2.0
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── hooks/                 # 拦截/留痕/注入脚本
@@ -163,7 +163,7 @@ wakita-plugins/
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock 命令
 │   │   └── scripts/               # inject-agent-model.py
-	│   └── wakita-toolkit/            # 开发工具包 v1.3.1
+	│   └── wakita-toolkit/            # 开发工具包 v1.4.0
 	│       ├── .claude-plugin/
 	│       │   └── plugin.json
         │       └── skills/                # 21 个领域 skill
