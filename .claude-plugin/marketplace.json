@@ -22,7 +22,7 @@
     },
     {
       "name": "wakita-toolkit",
-      "description": "开发工具包（v1.4.0）：21 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包/基线检查/合规检查/迁移收敛/参数审查/同步反模式/Playwright/Compose规范/代码标注等），可按需独立开关。与 wakita-governance 互补，不依赖外部 MCP 服务。新增插件图标支持。",
+      "description": "开发工具包（v1.5.0）：22 个领域 skill 集合（MySQL/Docker/测试/代码复用/前端规范/架构/打包/基线检查/合规检查/迁移收敛/参数审查/同步反模式/Playwright/Compose规范/代码标注/配置关联检查等），可按需独立开关。与 wakita-governance 互补，不依赖外部 MCP 服务。新增插件图标支持。",
       "icon": "https://raw.githubusercontent.com/AaaAkita/wakita-plugins/main/plugins/wakita-toolkit/assets/icon.png",
       "category": "development",
       "source": "./plugins/wakita-toolkit",
