@@ -17,7 +17,8 @@ _NORMS = """\
 3. 找不到证据明说"未找到"，不臆测。
 4. 危险操作（rm -rf / 强推 / DROP 等）会被自动拦截。
 5. 分支合并至主干后可复盘：有无可复用方案值得沉淀为 skill。
-6. 接到代码改动需求时，按 using-wakita 技能分级再动手（小/中/大），禁止未经分级直接开干。"""
+6. 接到代码改动需求时，按 using-wakita 工作流执行：先查 docs/specs/ 有无现成 spec → 分级（小/中/大）→ 中/大任务写 spec 留档 → Plan 用 ZCode 原生系统 → 调度 scout/builder/auditor → auditor 通过后标记 spec「开发完成」。
+7. 需求模糊时先加载 brainstorm skill 做头脑风暴，想清楚再写 spec。禁止直接开写。"""
 
 # 打包关键词 → 场景提示
 _PACK_KEYWORDS = [

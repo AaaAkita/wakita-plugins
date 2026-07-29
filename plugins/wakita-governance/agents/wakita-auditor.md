@@ -2,7 +2,7 @@
 name: "wakita-auditor"
 description: "严格代码审查员（DeepSeek 驱动）。对照项目规范（AGENTS.md/pyproject.toml/架构文档）审查代码，发现安全漏洞、逻辑错误、规范违反、性能隐患。只报高置信度问题，每条带文件:行号证据。可并行多实例扫不同模块。"
 color: red
-model: "custom:466f2f41-bacb-4168-b493-d0afa32a0357:deepseek-v4-flash"
+model: "custom:466f2f41-bacb-4168-b493-d0afa32a0357:deepseek-v4-pro"
 tools:
   - Read
   - Glob
@@ -100,7 +100,7 @@ tools:
 </verification_standard>
 
 <result_protocol>
-审查报告输出完成后，末尾附「结果回传」元信息，供主智能体(GLM)判断修复优先级与后续调度：
+审查报告输出完成后，末尾附「结果回传」元信息，供主智能体(MasteAgent)判断修复优先级与后续调度：
 
 ## 结果回传
 

@@ -12,21 +12,23 @@ ZCode（Claude Code 兼容）自托管插件仓库，提供 AI 开发工具的�
 wakita-plugins/
 ├── .claude-plugin/marketplace.json   # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/            # 管控核心（v2.2.0）
+│   ├── wakita-governance/            # 管控核心（v2.3.0）
 │   │   ├── hooks/                    # PreToolUse / PostToolUse / UserPromptSubmit
 │   │   ├── agents/                   # 子智能体：scout(探索) / auditor(审查) / builder(实现)，统一结果回传协议
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock 命令
 │   │   └── scripts/                  # inject-agent-model.py 子智能体模型切换
-│   └── wakita-toolkit/               # 开发工具包（v1.5.0）
-│       └── skills/                   # 22 个领域 skill（见下文）
+│   └── wakita-toolkit/               # 开发工具包（v1.6.0）
+│       └── skills/                   # 23 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
 
-## 插件一：wakita-governance（管控核心，v2.2.0）
+## 插件一：wakita-governance（管控核心，v2.3.0）
 
 提供危险操作拦截、写操作留痕、工作规范注入、子智能体调度与审计命令。
+
+工作流编排：查 spec（docs/specs/）→ 分级 → brainstorm（需求模糊时）→ 写 spec → Plan（EnterPlanMode）→ 调度 scout/builder/auditor → 标记 spec 完成。
 
 ### 内置子智能体
 
@@ -52,14 +54,15 @@ wakita-plugins/
 
 - `scripts/inject-agent-model.py` - 切换三个子智能体的 `model:` 字段。ZCode 不展开 agent frontmatter 里的环境变量，用户安装后若想换 provider/model 需跑此脚本。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.5.0）
+## 插件二：wakita-toolkit（开发工具包，v1.6.0）
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
-### 内置 skill（22 个）
+### 内置 skill（23 个）
 
 | Skill | 用途 |
 |-------|------|
+| `brainstorm` | 创作性头脑风暴（画图、对比方案，只思考不写代码） |
 | `chinese-commit-messages` | git commit message 强制中文 |
 | `code-annotation` | 代码输出中文标注（变量名/函数名首次出现处附加翻译） |
 | `code-reuse-audit` | 代码冗余审查与重构 |

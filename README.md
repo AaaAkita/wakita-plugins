@@ -6,17 +6,17 @@ Akita 自托管的 ZCode 插件仓库 —— 双插件架构，管控与工具�
 
 ```
 wakita-plugins
-├── wakita-governance（管控核心 v2.2.0）    ← 行为约束层
+├── wakita-governance（管控核心 v2.3.0）    ← 行为约束层
 │   ├── 危险操作拦截（PreToolUse）
 │   ├── 审计留痕（PostToolUse）
 │   ├── 工作规范注入（UserPromptSubmit）
 │   ├── 子智能体（scout / auditor / builder，统一结果回传协议）
 │   ├── 命令（/audit / /lock / /submodel）
-│   ├── 1 个 skill（using-wakita）
+│   ├── 1 个 skill（using-wakita：spec/plan/brainstorm 工作流编排）
 │   └── scripts（inject-agent-model.py 子智能体模型切换）
 │
-    └── wakita-toolkit（开发工具包 v1.5.0）     ← 领域知识层
-        └── 22 个 skill（MySQL / Docker / 测试 / 前端 / 架构…）
+    └── wakita-toolkit（开发工具包 v1.6.0）     ← 领域知识层
+        └── 23 个 skill（MySQL / Docker / 测试 / 前端 / 架构 / 头脑风暴…）
 ```
 
 两个插件**独立安装、独立维护、独立开关**，互不依赖。
@@ -101,10 +101,11 @@ python plugins/wakita-governance/scripts/inject-agent-model.py --json
 
 ### wakita-toolkit - 开发工具包
 
-#### 📚 内置 skill（22 个）
+#### 📚 内置 skill（23 个）
 
 | Skill | 用途 |
 |-------|------|
+| `brainstorm` | 创作性头脑风暴（画图、对比方案，只思考不写代码） |
 | `chinese-commit-messages` | git commit message 强制中文 |
 | `code-annotation` | 代码输出中文标注（变量名/函数名首次出现处附加翻译） |
 | `code-reuse-audit` | 代码冗余审查与重构 |
@@ -156,7 +157,7 @@ wakita-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json           # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/         # 管控核心 v2.2.0
+│   ├── wakita-governance/         # 管控核心 v2.3.0
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── hooks/                 # 拦截/留痕/注入脚本
@@ -164,10 +165,10 @@ wakita-plugins/
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock 命令
 │   │   └── scripts/               # inject-agent-model.py
-│   └── wakita-toolkit/            # 开发工具包 v1.5.0
+│   └── wakita-toolkit/            # 开发工具包 v1.6.0
 │       ├── .claude-plugin/
 │       │   └── plugin.json
-        │       └── skills/                # 22 个领域 skill
+        │       └── skills/                # 23 个领域 skill
 ├── docs/                          # 操作手册
 └── README.md
 ```
