@@ -1,0 +1,38 @@
+{
+  "name": "wakita-governance",
+  "version": "2.3.0",
+  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议）+ audit/lock/submodel 命令。",
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "commands": "./commands/",
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "command": "python \"./hooks/pretooluse.py\"",
+      "timeout": 10
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Edit|Write|MultiEdit|Bash",
+      "command": "python \"./hooks/posttooluse.py\"",
+      "timeout": 10
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Bash",
+      "command": "python \"./hooks/posttooluse_merge.py\"",
+      "timeout": 10
+    },
+    {
+      "event": "UserPromptSubmit",
+      "command": "python \"./hooks/userpromptsubmit.py\"",
+      "timeout": 10
+    }
+  ],
+  "author": "AaaAkita",
+  "homepage": "https://github.com/AaaAkita/wakita-plugins",
+  "interface": {
+    "displayName": "Wakita Governance",
+    "shortDescription": "危险操作拦截 / 审计留痕 / 工作规范注入 / 子智能体调度"
+  }
+}
