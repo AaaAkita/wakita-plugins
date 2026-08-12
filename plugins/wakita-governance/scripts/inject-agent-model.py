@@ -2,9 +2,15 @@
 #
 # inject-agent-model.py
 #
-# Set the `model:` field in the frontmatter of the three wakita-governance
-# agent files (wakita-scout.md, wakita-builder.md, wakita-auditor.md) under
-# the INSTALLED plugin dir.
+# Generate / update the three wakita-governance subagent files
+# (wakita-scout.md, wakita-builder.md, wakita-auditor.md) in the USER-LEVEL
+# ZCode subagent directory ~/.zcode/agents/, from the templates shipped in
+# this plugin under templates/agents/.
+#
+# Since v2.4.0 the plugin no longer ships agents under agents/ (which ZCode
+# auto-registers as plugin agents). Instead, this script materializes them as
+# user-scope subagents so the user can freely edit them, and injects the
+# chosen `model:` and `thoughtLevel:` values into the frontmatter.
 #
 # The model value has the form:  custom:<provider-key>:<model-id>
 #   - provider-key: read from ~/.zcode/v2/config.json; colons are URL-encoded
@@ -13,51 +19,43 @@
 #     encoding.
 #   - model-id: a model key nested under the chosen provider in config.json.
 #
-# This is the Python cross-platform counterpart of dev-plugin's
-# inject-agent-model.{sh,ps1} scripts. Key improvement: handles BOTH
-# dict and list provider structures in config.json (dev-plugin's ps1
-# fails on list form, which is why "Windows can't read provider info"
-# was reported).
-#
-# Defaults to DeepSeek deepseek-v4-flash (matches the shipped frontmatter):
+# Defaults to DeepSeek deepseek-v4-flash (matches the shipped scout/builder
+# templates; the auditor template ships with deepseek-v4-pro, so a bare
+# --apply switches it to flash too — all three agents get ONE unified model):
 #   provider = 466f2f41-bacb-4168-b493-d0afa32a0357
 #   modelid  = deepseek-v4-flash
 #
 # Usage:
-#   python scripts/inject-agent-model.py                       # default, latest installed version
-#   python scripts/inject-agent-model.py --list                # list all providers and models
-#   python scripts/inject-agent-model.py --version 2.0.4
-#   python scripts/inject-agent-model.py --provider <key> --model <id>
+#   python scripts/inject-agent-model.py                       # default: DeepSeek flash, thoughtLevel from template
+#   python scripts/inject-agent-model.py --list                # list all usable providers and models
+#   python scripts/inject-agent-model.py --provider <key> --model <id>            # dry-run (no writes)
+#   python scripts/inject-agent-model.py --provider <key> --model <id> --apply    # actually write
+#   python scripts/inject-agent-model.py --thought-level high --apply             # override thoughtLevel
 #
 # Behavior:
-#   - If an agent file has a `model:` line, replace it in place.
-#   - If it has no `model:` line, insert one right before the closing `---`
-#     of the frontmatter.
-#   - Backs up each file to <file>.bak before editing.
-#   - Idempotent: re-running with the same value is a no-op (exit 0).
+#   - Renders each templates/agents/wakita-*.md with the new `model:` value
+#     (and `thoughtLevel:` when --thought-level is given), then writes the
+#     result to ~/.zcode/agents/<name>.md.
+#   - Backs up an existing target file to <file>.bak before overwriting.
+#   - Idempotent: target file already byte-identical -> skip (exit 0).
 #   - Validates that provider and model exist in config.json before writing.
-#   - Preserves UTF-8 without BOM and original newline style (LF/CRLF).
+#   - Handles BOTH dict and list provider structures in config.json.
+#   - Writes UTF-8 without BOM and preserves the template's newline style.
 #
 
 import argparse
 import json
-import os
 import re
 import sys
 from pathlib import Path
-from urllib.parse import quote
 
 # ----------------------------- config -----------------------------
-PLUGIN_GROUP = "wakita-plugins"
-PLUGIN_NAME = "wakita-governance"
 CONFIG_PATH = Path.home() / ".zcode" / "v2" / "config.json"
-INSTALL_ROOT = (
-    Path.home() / ".zcode" / "cli" / "plugins" / "cache" / PLUGIN_GROUP / PLUGIN_NAME
-)
-AGENTS_SUBDIR = "agents"
+USER_AGENTS_DIR = Path.home() / ".zcode" / "agents"
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates" / "agents"
 AGENT_FILES = ["wakita-scout.md", "wakita-builder.md", "wakita-auditor.md"]
 
-# defaults: DeepSeek deepseek-v4-flash (matches shipped frontmatter)
+# defaults: DeepSeek deepseek-v4-flash (matches shipped templates)
 DEFAULT_PROVIDER = "466f2f41-bacb-4168-b493-d0afa32a0357"
 DEFAULT_MODEL = "deepseek-v4-flash"
 
@@ -74,7 +72,7 @@ def load_providers(cfg_path: Path) -> dict:
       1. dict form (current): cfg["provider"] = { "<key>": {name, models, ...}, ... }
       2. list form (fallback): cfg["provider"] = [ {key/id, name, models, ...}, ... ]
 
-    Returns: { provider_key: { "name": str, "enabled": bool, "models": { model_id: ... } } }
+    Returns: { provider_key: { "name": str, "enabled": bool, "usable": bool, "models": {...} } }
 
     Raises SystemExit on parse failure.
     """
@@ -188,22 +186,8 @@ def print_providers_json(providers: dict, include_disabled: bool = False) -> Non
     """Print providers as JSON for command/slash-command consumption.
 
     By default only usable providers are returned (enabled + non-empty API key),
-    so the /submodel picker only offers providers the user can actually use.
+    so the /subagent-create picker only offers providers the user can actually use.
     Pass include_disabled=True to return all.
-
-    Output schema:
-    {
-      "providers": [
-        {
-          "key": str,
-          "name": str,
-          "enabled": bool,
-          "usable": bool,
-          "models": [str, ...]
-        },
-        ...
-      ]
-    }
     """
     shown = providers if include_disabled else {
         k: v for k, v in providers.items() if v.get("usable")
@@ -223,128 +207,100 @@ def print_providers_json(providers: dict, include_disabled: bool = False) -> Non
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 
-# ----------------------------- locate plugin dir -----------------------------
-def detect_latest_version(install_root: Path) -> str:
-    """Pick the newest x.y.z directory under install_root.
+# ----------------------------- template rendering -----------------------------
+def render_agent(template_path: Path, model_value: str, thought_level: str | None) -> bytes:
+    """Render one agent template with the given model value / thoughtLevel.
 
-    Uses tuple sort so 1.10.0 > 1.9.0 (lexicographic sort would pick 1.9.0).
+    Line-based replacement inside the frontmatter; the body is preserved
+    byte-for-byte (only lines starting with `model:` / `thoughtLevel:` change).
+    Preserves the template's newline style (LF/CRLF).
     """
-    pattern = re.compile(r"^\d+\.\d+\.\d+$")
-    versions = []
-    for entry in install_root.iterdir():
-        if entry.is_dir() and pattern.match(entry.name):
-            parts = entry.name.split(".")
-            try:
-                versions.append((tuple(int(p) for p in parts), entry.name))
-            except ValueError:
-                continue
-    if not versions:
-        err(f"no version directory (x.y.z) found under {install_root}")
-        err(f"Pass the version explicitly:  python scripts/inject-agent-model.py --version 2.0.4")
-        sys.exit(1)
-    versions.sort(key=lambda v: v[0])
-    return versions[-1][1]
-
-
-# ----------------------------- per-file edit -----------------------------
-def edit_agent_file(path: Path, value: str) -> bool:
-    """Edit one agent file's frontmatter `model:` field.
-
-    Returns True on success, False on error.
-    """
-    if not path.is_file():
-        print(f"  {path.name:<28} skip: file not found", file=sys.stderr)
-        return False
-
-    raw = path.read_bytes()
-    if not raw:
-        print(f"  {path.name:<28} error: file is empty", file=sys.stderr)
-        return False
-
-    # Detect newline style and preserve it
-    if b"\r\n" in raw:
-        nl = "\r\n"
-    else:
-        nl = "\n"
-
+    raw = template_path.read_bytes()
+    nl = "\r\n" if b"\r\n" in raw else "\n"
     text = raw.decode("utf-8")
-    # Strip a single trailing newline for line processing, remember to re-add
-    had_trailing_nl = text.endswith(nl)
-    body = text[: -len(nl)] if had_trailing_nl else text
-    lines = body.split(nl)
+    lines = text.split(nl)
 
-    model_line = f'model: "{value}"'
-
-    # 0) idempotency: already the target value (with or without quotes)
-    target_with_quotes = f'model: "{value}"'
-    target_without_quotes = f"model: {value}"
-    for ln in lines:
-        trimmed = ln.strip()
-        if trimmed == target_with_quotes or trimmed == target_without_quotes:
-            print(f"  {path.name:<28} already set, skip")
-            return True
-
-    # backup (raw bytes to preserve exact original)
-    backup = path.with_suffix(path.suffix + ".bak")
-    backup.write_bytes(raw)
-
-    # 1) replace existing ^model: line (case-sensitive)
-    replaced = False
+    model_replaced = False
+    thought_replaced = thought_level is None  # no override -> nothing to do
+    in_frontmatter = False
+    out_lines = []
     for i, ln in enumerate(lines):
-        if re.match(r"^model:", ln):
-            lines[i] = model_line
-            replaced = True
-            break
+        stripped = ln.strip()
+        # Track the frontmatter block (between the opening and closing ---)
+        # so replacement can never touch body lines that happen to start
+        # with `model:` / `thoughtLevel:`.
+        if i == 0 and stripped == "---":
+            in_frontmatter = True
+            out_lines.append(ln)
+            continue
+        if in_frontmatter and stripped == "---":
+            in_frontmatter = False
+            out_lines.append(ln)
+            continue
+        if in_frontmatter and re.match(r"^model:", ln):
+            out_lines.append(f'model: "{model_value}"')
+            model_replaced = True
+        elif in_frontmatter and thought_level is not None and re.match(r"^thoughtLevel:", ln):
+            out_lines.append(f"thoughtLevel: {thought_level}")
+            thought_replaced = True
+        else:
+            out_lines.append(ln)
 
-    # 2) no model line -> insert before the closing '---' of the frontmatter
-    if not replaced:
-        if not lines or lines[0].strip() != "---":
-            print(
-                f"  {path.name:<28} error: no frontmatter opener '---' on line 1",
-                file=sys.stderr,
-            )
-            return False
-        inserted = False
-        for i in range(1, len(lines)):
-            if lines[i].strip() == "---":
-                lines.insert(i, model_line)
-                inserted = True
-                break
-        if not inserted:
-            print(
-                f"  {path.name:<28} error: no closing '---' found in frontmatter",
-                file=sys.stderr,
-            )
-            return False
+    if not model_replaced:
+        raise ValueError(f"template {template_path.name} has no 'model:' line in frontmatter")
+    if not thought_replaced:
+        raise ValueError(f"template {template_path.name} has no 'thoughtLevel:' line in frontmatter")
 
-    # write back with SAME newline style, UTF-8 without BOM
-    out = nl.join(lines)
-    if had_trailing_nl:
-        out += nl
-    path.write_bytes(out.encode("utf-8"))
-    print(f"  {path.name:<28} updated -> {value}")
-    return True
+    return nl.join(out_lines).encode("utf-8")
+
+
+def write_user_agent(target_path: Path, content: bytes) -> str:
+    """Write one rendered agent file to the user agents dir.
+
+    Returns: "created" | "updated" | "skip" (already identical).
+    Backs up an existing differing file to <file>.bak before overwriting.
+    """
+    if target_path.is_file():
+        existing = target_path.read_bytes()
+        if existing == content:
+            return "skip"
+        target_path.with_suffix(target_path.suffix + ".bak").write_bytes(existing)
+        target_path.write_bytes(content)
+        return "updated"
+    target_path.write_bytes(content)
+    return "created"
+
+
+def target_state(target_path: Path, content: bytes) -> str:
+    """Read-only state of a target file vs the content we would write."""
+    try:
+        if not target_path.is_file():
+            return "missing"
+        return "identical" if target_path.read_bytes() == content else "will_update"
+    except OSError:
+        return "unreadable"
 
 
 # ----------------------------- main -----------------------------
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Inject model value into wakita-governance agent frontmatter",
+        description="Generate/update wakita-governance user-level subagents (~/.zcode/agents/) "
+        "from plugin templates, injecting model and thoughtLevel into frontmatter",
     )
     parser.add_argument("--provider", default=DEFAULT_PROVIDER, help=f"Provider key (default: {DEFAULT_PROVIDER})")
     parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Model id (default: {DEFAULT_MODEL})")
-    parser.add_argument("--version", help="Target a specific installed version (e.g. 2.0.4)")
+    parser.add_argument("--thought-level", default=None,
+                        help="thoughtLevel value to inject (e.g. max/high/low); default: keep template value")
     parser.add_argument("--list", action="store_true", help="List all usable providers and models (enabled + non-empty API key), human-readable, then exit")
     parser.add_argument("--json", action="store_true", help="List all usable providers and models as JSON, then exit (for slash command)")
     parser.add_argument("--all", action="store_true", help="Include disabled/no-key providers in --list/--json output")
-    parser.add_argument("--apply", action="store_true", help="Actually write the change; without this flag, --provider/--model only validate and print what would happen")
+    parser.add_argument("--apply", action="store_true", help="Actually write the files; without this flag only a dry-run plan is printed")
     args = parser.parse_args()
 
     providers = load_providers(CONFIG_PATH)
 
     # ---- read-only modes: --list / --json ----
     if args.json:
-        # Structured output for slash command consumption.
         print_providers_json(providers, include_disabled=args.all)
         return 0
 
@@ -355,6 +311,11 @@ def main() -> int:
     # ----------------------------- sanity: provider/model non-empty -----------------------------
     if not args.provider or not args.model:
         err("--provider and --model must both be non-empty.")
+        return 2
+
+    thought_level = args.thought_level.strip() if args.thought_level else None
+    if args.thought_level is not None and not thought_level:
+        err("--thought-level must be non-empty when provided.")
         return 2
 
     # ----------------------------- validate against config.json -----------------------------
@@ -378,43 +339,67 @@ def main() -> int:
     provider_enc = args.provider.replace(":", "%3A")
     model_value = f"custom:{provider_enc}:{args.model}"
 
+    # ----------------------------- locate templates -----------------------------
+    if not TEMPLATES_DIR.is_dir():
+        err(f"templates dir not found: {TEMPLATES_DIR}")
+        err("The plugin installation looks broken (missing templates/agents/). Reinstall wakita-governance.")
+        return 1
+
+    # ----------------------------- render all three agents -----------------------------
+    rendered: dict[str, bytes] = {}
+    for af in AGENT_FILES:
+        tpl = TEMPLATES_DIR / af
+        if not tpl.is_file():
+            err(f"template not found: {tpl}")
+            return 1
+        try:
+            rendered[af] = render_agent(tpl, model_value, thought_level)
+        except ValueError as e:
+            err(str(e))
+            return 1
+
+    effective_thought = thought_level or "(template default)"
+
     # ----------------------------- dry-run guard: require --apply to write ----
     if not args.apply:
-        # Dry-run: print the planned change as JSON for the slash command to parse,
-        # but do NOT touch any file.
         print(json.dumps({
             "dry_run": True,
             "provider": args.provider,
             "provider_name": prov_info.get("name", args.provider),
             "model": args.model,
             "model_value": model_value,
-            "note": "Re-run with --apply to actually write the change.",
+            "thought_level": effective_thought,
+            "target_dir": str(USER_AGENTS_DIR),
+            "files": [
+                {"file": af, "state": target_state(USER_AGENTS_DIR / af, content)}
+                for af, content in rendered.items()
+            ],
+            "note": "Re-run with --apply to actually write the files.",
         }, ensure_ascii=False, indent=2))
         return 0
 
-    # ----------------------------- locate plugin dir -----------------------------
-    if not INSTALL_ROOT.exists():
-        err(f"plugin install dir not found: {INSTALL_ROOT}")
-        err("Please install the plugin in the ZCode client first, then re-run this script.")
+    # ----------------------------- write to user agents dir -----------------------------
+    try:
+        USER_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        err(f"cannot create user agents dir {USER_AGENTS_DIR}: {e}")
         return 1
 
-    version = args.version or detect_latest_version(INSTALL_ROOT)
-    version_dir = INSTALL_ROOT / version
-    agents_dir = version_dir / AGENTS_SUBDIR
-
-    if not agents_dir.is_dir():
-        err(f"agents dir not found: {agents_dir}")
-        return 1
-
-    # ----------------------------- per-file edit -----------------------------
+    created_files = []
     updated_files = []
     skipped_files = []
     failed_files = []
-    for af in AGENT_FILES:
-        result = edit_agent_file_quiet(agents_dir / af, model_value)
-        if result == "updated":
+    for af, content in rendered.items():
+        try:
+            status = write_user_agent(USER_AGENTS_DIR / af, content)
+        except OSError as e:
+            err(f"failed to write {af}: {e}")
+            status = "failed"
+        if status == "created":
+            created_files.append(af)
+        elif status == "updated":
             updated_files.append(af)
-        elif result == "skip":
+        elif status == "skip":
             skipped_files.append(af)
         else:
             failed_files.append(af)
@@ -427,82 +412,21 @@ def main() -> int:
     print(json.dumps({
         "ok": True,
         "applied": True,
-        "version": version,
         "provider": args.provider,
         "provider_name": prov_info.get("name", args.provider),
         "model": args.model,
         "model_value": model_value,
+        "thought_level": effective_thought,
+        "target_dir": str(USER_AGENTS_DIR),
+        "created_files": created_files,
         "updated_files": updated_files,
         "skipped_files": skipped_files,
         "restart_hint": (
-            "ZCode 当前不支持热重载已加载的 agent。需新开会话让新 model 生效。"
+            "ZCode 当前不支持热重载已加载的 agent。需新开会话让子智能体生效。"
             "请关闭当前会话或重启 ZCode 客户端。"
         ),
     }, ensure_ascii=False, indent=2))
     return 0
-
-
-def edit_agent_file_quiet(path: Path, value: str) -> str:
-    """Same as edit_agent_file but returns a status string instead of printing.
-
-    Returns: "updated" | "skip" | "failed"
-    """
-    if not path.is_file():
-        return "failed"
-
-    raw = path.read_bytes()
-    if not raw:
-        return "failed"
-
-    if b"\r\n" in raw:
-        nl = "\r\n"
-    else:
-        nl = "\n"
-
-    text = raw.decode("utf-8")
-    had_trailing_nl = text.endswith(nl)
-    body = text[: -len(nl)] if had_trailing_nl else text
-    lines = body.split(nl)
-
-    model_line = f'model: "{value}"'
-
-    # idempotency
-    target_with_quotes = f'model: "{value}"'
-    target_without_quotes = f"model: {value}"
-    for ln in lines:
-        trimmed = ln.strip()
-        if trimmed == target_with_quotes or trimmed == target_without_quotes:
-            return "skip"
-
-    # backup
-    backup = path.with_suffix(path.suffix + ".bak")
-    backup.write_bytes(raw)
-
-    # replace or insert
-    replaced = False
-    for i, ln in enumerate(lines):
-        if re.match(r"^model:", ln):
-            lines[i] = model_line
-            replaced = True
-            break
-
-    if not replaced:
-        if not lines or lines[0].strip() != "---":
-            return "failed"
-        inserted = False
-        for i in range(1, len(lines)):
-            if lines[i].strip() == "---":
-                lines.insert(i, model_line)
-                inserted = True
-                break
-        if not inserted:
-            return "failed"
-
-    out = nl.join(lines)
-    if had_trailing_nl:
-        out += nl
-    path.write_bytes(out.encode("utf-8"))
-    return "updated"
 
 
 if __name__ == "__main__":

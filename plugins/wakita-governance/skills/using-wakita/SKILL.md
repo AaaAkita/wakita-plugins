@@ -21,22 +21,19 @@ user-invocable: True
 
 **两条线**：spec（`docs/specs/`，留档） + plan（EnterPlanMode，一次性执行文件）。
 
+**高风险集合**：安全、认证、支付、DB Schema、数据模型、对外 API 契约变更 → 触发即 **auditor 强制**，不受任务级别影响。
 
 ## 决策树
 
 ```
 用户需求
-  → 查 docs/specs/（先读前30行）
-     有 → 读摘要判断是否匹配 → 进入分级
-     无 → 进入分级
-  → 分级（三轴：影响范围 + 熟悉度 + 风险度）
+  → 查 docs/specs/（先读前30行判断匹配）
+  → 分级（三轴合成）
      小 → 直接干
-     中/大 → 需求模糊？→ brainstorm → 写 spec
-             需求清晰？→ 直接写 spec
-  → 大任务：EnterPlanMode
-  → 中任务：可选 EnterPlanMode
+     中/大 → 需求模糊 → brainstorm → 写 spec；需求清晰 → 直接写 spec
+  → Plan：大任务必走 EnterPlanMode，中任务可选，小任务不走
   → 执行：小(直接) / 中(scout → MasterAgent实现 → auditor) / 大(scout → builder → auditor)
-  → auditor success → 标记 spec「开发完成」
+  → auditor success → 标记完成
 ```
 
 ---
@@ -58,13 +55,18 @@ ls docs/specs/
 
 ---
 
-## 第二步：分级（三轴评估）
+## 第二步：分级（三轴合成）
 
-**轴 A — 影响范围**：小(1-2文件) / 中(2-5文件,单模块) / 大(5+文件,跨模块,新功能,改数据模型)
+**轴 A — 影响范围（基准级）**：小(1-2文件) / 中(3-5文件,单模块) / 大(6+文件,跨模块,新功能,改数据模型)
 
-**轴 B — 熟悉度**：本次会话刚写过→降一级 / 从未读过→升一级 / 从零新功能→直接大
+**轴 B — 熟悉度（最多调一级）**：本次会话刚写过→降一级 / 从未读过→升一级
 
-**轴 C — 风险度**：纯UI/文案→降一级 / 改DB Schema/API契约→升一级 / 安全/认证/支付→升一级+auditor强制
+**轴 C — 风险度（最多调一级）**：纯UI/文案→降一级 / 改DB Schema/API契约/涉安全支付→升一级
+
+**合成规则**：
+1. 以轴 A 定基准级，轴 B、轴 C 各最多调整一级。
+2. 多轴冲突时升级优先于降级（取更保守的级别）。
+3. 触发高风险集合 → auditor 强制，与最终级别无关。
 
 不确定时**微探**确认（一次 grep 看影响面）。
 
@@ -82,7 +84,7 @@ ls docs/specs/
 
 输出到 `docs/specs/<feature-name>.md`，正文 **≤ 120 行**。前 30 行必须含 metadata + 摘要 + 背景。
 
-```markdown
+````markdown
 # <功能名称>
 
 **日期**: YYYY-MM-DD
@@ -124,7 +126,7 @@ type XxxRequest struct { ... }
 
 ## 待确认
 - [ ] 待确认项
-```
+````
 
 ---
 
@@ -140,7 +142,7 @@ Plan 内容：改动文件+行号、每步实现目标、验证命令。一次�
 
 | 级别 | 流程 |
 |------|------|
-| **小** | MasterAgent直接 Read/Edit/Write → 自检。例外：涉及安全/数据模型至少过 auditor |
+| **小** | MasterAgent直接 Read/Edit/Write → 自检。触发高风险集合 → 至少过 auditor |
 | **中** | scout 探索 → MasterAgent实现 → auditor 审查 |
 | **大** | scout 探索 → builder 按 Plan 实现+自验证 → auditor 审查 |
 
@@ -150,9 +152,9 @@ builder **不决策**。Plan/spec 有问题它报告，MasterAgent决策后修�
 
 ## 第七步：标记完成
 
-auditor `success` 后，Edit spec 文件：
-- `**状态**: 待实现` → `**状态**: 开发完成`
-- 追加 `**完成日期**: YYYY-MM-DD`
+auditor `success` 后：
+- **有 spec**：Edit spec 文件，`**状态**: 待实现` → `**状态**: 开发完成`，追加 `**完成日期**: YYYY-MM-DD`
+- **无 spec**（小任务触发高风险集合的情形）：向用户汇报验证结论即可；若改动后续可能被复用/追溯，升级为中任务补最小 spec
 
 ---
 
@@ -171,11 +173,23 @@ auditor `success` 后，Edit spec 文件：
 
 ## 结果回传协议
 
-子智能体末尾均附「结果回传」。MasterAgent必须读 `状态` 字段：
+子智能体末尾必须附「结果回传」，模板：
+
+```
+**状态**: success | partial | failed
+**摘要**: 1-2行结论
+**位置**: 文件:行号（改动/问题定位，无则省略）
+**阻塞项**: （partial/failed 必填）
+**根因**: （failed 必填）
+**下一步建议**: （partial/failed 必填）
+**误报**: true | false（仅 auditor）
+```
+
+MasterAgent必须读 `状态` 字段：
 
 | 状态 | 处理 |
 |------|------|
-| `success` | 推进下一步（auditor success → 标记 spec 完成） |
+| `success` | 推进下一步（auditor success → 标记完成） |
 | `partial` | **不得当 success**。读阻塞项和下一步建议，决定补派或人工介入 |
 | `failed` | 读根因，解决阻塞项后重派，不得同样方式重试 |
 
@@ -187,10 +201,10 @@ auditor `success` 后，Edit spec 文件：
 2. **先分级，不跳步**。不确定时微探。
 3. **中/大任务写 spec**。无 spec 不写代码。
 4. **大任务走 Plan**。不跳 EnterPlanMode。
-5. **auditor 通过必须标记 spec 完成**。
-6. **auditor 发现的问题必须修**。除非 auditor 说误报。
+5. **auditor 通过必须标记完成**：有 spec 标 spec，无 spec 记验证结论。
+6. **auditor 发现的问题必须修**。除非 auditor 标记误报。
 7. **builder 不决策**。Plan 有问题它报告，MasterAgent决策。
-8. **安全/认证/数据模型 → auditor 强制**，不管什么级别。
+8. **高风险集合 → auditor 强制**，不管什么级别。
 
 **常见借口**：「小改动直接改」→ 不熟的文件先微探 / 「Plan 太麻烦」→ 中/大任务没 Plan 容易跑偏 / 「不用写 spec，代码就是文档」→ 三个月后自己也看不懂。
 
@@ -198,7 +212,7 @@ auditor `success` 后，Edit spec 文件：
 
 ## 模型切换
 
-`/submodel` 命令交互式切换子智能体模型。切换后需重开会话生效。
+派子智能体前，先检测 `~/.zcode/agents/` 下是否已生成三个 agent 文件（wakita-scout / wakita-builder / wakita-auditor）。**未生成时提醒用户先运行 `/subagent-create` 交互式生成，不要直接调度**（会提示 agent 不存在）。后续切换模型/思考强度（thoughtLevel）也用 `/subagent-create`。写入后需重开会话生效。
 
 ---
 
@@ -207,4 +221,4 @@ auditor `success` 后，Edit spec 文件：
 | 类型 | 工具 | 谁跑 |
 |------|------|------|
 | 只报错不改文件 | `pytest` `mypy` `npm run build` `eslint` | builder |
-| 会改文件 | `black` `isort` `prettier` | 仅 MasterAgent|
+| 会改文件 | `black` `isort` `prettier` | 仅 MasterAgent |

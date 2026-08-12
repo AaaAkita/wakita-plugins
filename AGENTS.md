@@ -12,29 +12,31 @@ ZCode（Claude Code 兼容）自托管插件仓库，提供 AI 开发工具的�
 wakita-plugins/
 ├── .claude-plugin/marketplace.json   # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/            # 管控核心（v2.3.0）
+│   ├── wakita-governance/            # 管控核心（v2.4.0）
 │   │   ├── hooks/                    # PreToolUse / PostToolUse / UserPromptSubmit
-│   │   ├── agents/                   # 子智能体：scout(探索) / auditor(审查) / builder(实现)，统一结果回传协议
+│   │   ├── templates/agents/         # 子智能体模板（scout/auditor/builder，不注册为插件 agent）
 │   │   ├── skills/                   # 1 个 skill：using-wakita
-│   │   ├── commands/                 # audit / lock 命令
-│   │   └── scripts/                  # inject-agent-model.py 子智能体模型切换
+│   │   ├── commands/                 # audit / lock / subagent-create 命令
+│   │   └── scripts/                  # inject-agent-model.py 生成/切换用户级子智能体
 │   └── wakita-toolkit/               # 开发工具包（v1.6.0）
 │       └── skills/                   # 23 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
 
-## 插件一：wakita-governance（管控核心，v2.3.0）
+## 插件一：wakita-governance（管控核心，v2.4.0）
 
 提供危险操作拦截、写操作留痕、工作规范注入、子智能体调度与审计命令。
 
 工作流编排：查 spec（docs/specs/）→ 分级 → brainstorm（需求模糊时）→ 写 spec → Plan（EnterPlanMode）→ 调度 scout/builder/auditor → 标记 spec 完成。
 
-### 内置子智能体
+### 子智能体（用户级生成，v2.4.0 起）
 
 - `wakita-scout` - 编码前探索现有结构（只读）
 - `wakita-auditor` - 代码审查，带文件:行号证据
 - `wakita-builder` - 按 Spec/Plan 实现代码 + 自验证
+
+插件**不直接分发** agent（`templates/agents/` 只是模板，不在 ZCode 插件 agent 发现路径上）。首次使用运行 `/subagent-create`，把三个 agent 渲染写入用户级目录 `~/.zcode/agents/`（含 `model:` + `thoughtLevel:` + `injectAgentsMd:`），重开会话后可调遣；用户可自由编辑这些文件。
 
 三个 agent 统一采用「结果回传协议」（`<result_protocol>` 章节），向主智能体回传状态/产出物/验证结果/关键决策/依赖与风险/下一步建议，`partial` 不得谎报为 `success`。
 
@@ -48,11 +50,11 @@ wakita-plugins/
 
 - `/audit [行数]` - 查看最近审计日志
 - `/lock <文件路径>` - 临时加锁保护文件
-- `/submodel` - 交互式切换三个子智能体的运行模型（读 config.json 列出可用项供用户选，注入后提示需重开会话生效）。支持直连模式 `/submodel <provider> <model>`。交互式默认只列出「可用」的 provider（`enabled: true` **且** API Key 非空），已启用但未填 Key 的内置 provider（如 GLM 官方、Z.ai）自动排除；直连模式不受此限。详见 `commands/submodel.md`。
+- `/subagent-create` - 交互式生成/切换三个用户级子智能体（读 config.json 列出可用项供用户选，写入 `~/.zcode/agents/`，注入后提示需重开会话生效）。首次运行即初始化生成；后续运行切换 model / thoughtLevel。支持直连模式 `/subagent-create <provider> <model>`。交互式默认只列出「可用」的 provider（`enabled: true` **且** API Key 非空），已启用但未填 Key 的内置 provider（如 GLM 官方、Z.ai）自动排除；直连模式不受此限。详见 `commands/subagent-create.md`。
 
 ### 安装后配置脚本
 
-- `scripts/inject-agent-model.py` - 切换三个子智能体的 `model:` 字段。ZCode 不展开 agent frontmatter 里的环境变量，用户安装后若想换 provider/model 需跑此脚本。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
+- `scripts/inject-agent-model.py` - 把 `templates/agents/` 模板渲染（注入 `model:` / `thoughtLevel:`）后写入 `~/.zcode/agents/`。ZCode 不展开 agent frontmatter 里的环境变量，切换 provider/model 需跑此脚本（或 `/subagent-create` 命令）。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 
 ## 插件二：wakita-toolkit（开发工具包，v1.6.0）
 
@@ -109,7 +111,7 @@ wakita-plugins/
 |---|------|----------|
 | 1 | `plugins/<plugin>/.claude-plugin/plugin.json` | `version` 字段 |
 | 2 | `.claude-plugin/marketplace.json` | 对应插件 `description` 中的版本号 |
-| 3 | `plugins/<plugin>/agents/*.md` | 如有模型等配置变更 |
+| 3 | `plugins/<plugin>/templates/agents/*.md` | 如有模型等配置变更 |
 | 4 | `AGENTS.md` + `README.md` | 版本号、skill 列表等文档 |
 
 **ZCode 更新检测机制**：读取 marketplace.json 中 description 的版本号，与已安装版本对比。版本号相同则不触发更新提示。

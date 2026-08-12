@@ -6,14 +6,14 @@ Akita 自托管的 ZCode 插件仓库 —— 双插件架构，管控与工具�
 
 ```
 wakita-plugins
-├── wakita-governance（管控核心 v2.3.0）    ← 行为约束层
+├── wakita-governance（管控核心 v2.4.0）    ← 行为约束层
 │   ├── 危险操作拦截（PreToolUse）
 │   ├── 审计留痕（PostToolUse）
 │   ├── 工作规范注入（UserPromptSubmit）
-│   ├── 子智能体（scout / auditor / builder，统一结果回传协议）
-│   ├── 命令（/audit / /lock / /submodel）
+│   ├── 子智能体模板（scout / auditor / builder，由 /subagent-create 生成用户级 agent）
+│   ├── 命令（/audit / /lock / /subagent-create）
 │   ├── 1 个 skill（using-wakita：spec/plan/brainstorm 工作流编排）
-│   └── scripts（inject-agent-model.py 子智能体模型切换）
+│   └── scripts（inject-agent-model.py 生成/切换用户级子智能体）
 │
     └── wakita-toolkit（开发工具包 v1.6.0）     ← 领域知识层
         └── 23 个 skill（MySQL / Docker / 测试 / 前端 / 架构 / 头脑风暴…）
@@ -44,11 +44,13 @@ wakita-plugins
 
 每次提交 prompt 时注入 6 条规范提示。
 
-#### 🤖 内置子智能体（3 个）
+#### 🤖 子智能体（3 个，用户级生成）
 
 - `wakita-scout` - 代码库探索专家（只读，编码前侦察现有结构）
 - `wakita-auditor` - 代码审查员（对照规范查问题，带文件:行号证据）
 - `wakita-builder` - 代码实现专家（按 Spec/Plan 写代码 + 自验证）
+
+自 v2.4.0 起插件不再随包分发 agent，首次使用运行 `/subagent-create` 把模板渲染写入 `~/.zcode/agents/`（frontmatter 含 `model:` + `thoughtLevel:` + `injectAgentsMd:`），重开会话后可调遣，用户可自由编辑。
 
 三个 agent 统一采用「结果回传协议」，向主智能体回传状态/产出物/验证结果/关键决策/依赖与风险/下一步建议，`partial` 不得谎报为 `success`。
 
@@ -60,36 +62,41 @@ wakita-plugins
 
 - `/audit [行数]` - 查看最近审计日志
 - `/lock <文件路径>` - 临时加锁保护文件
-- `/submodel` - 交互式切换三个子智能体（scout/auditor/builder）的运行模型
+- `/subagent-create` - 交互式生成/切换三个用户级子智能体（scout/auditor/builder）的运行模型与思考强度
 
-##### `/submodel` 命令详解
+##### `/subagent-create` 命令详解
 
-子智能体的 `model:` 字段硬编码在 agent frontmatter 里，ZCode 不展开环境变量，安装后想换 provider/model 必须重新注入。`/submodel` 提供两种用法：
+子智能体以用户级文件存在于 `~/.zcode/agents/`，frontmatter 的 `model:` / `thoughtLevel:` 需注入真实值（ZCode 不展开环境变量）。`/subagent-create` 首次运行即生成三个子智能体，后续运行用于切换 model / thoughtLevel。两种用法：
 
 | 用法 | 说明 | 适用场景 |
 |------|------|----------|
-| `/submodel` | 交互式：读取本机 `~/.zcode/v2/config.json`，用 `AskUserQuestion` 列出可用 provider/model 供选择，dry-run 确认后写入 | 不熟悉 config.json 结构，或想可视化挑选（推荐） |
-| `/submodel <provider> <model>` | 直连模式：跳过选择，直接注入指定 provider+model | 已在别处查过 provider key，或要注入默认列表里被过滤掉的 provider |
+| `/subagent-create` | 交互式：读取本机 `~/.zcode/v2/config.json`，用 `AskUserQuestion` 列出可用 provider/model 供选择，dry-run 确认后写入 | 不熟悉 config.json 结构，或想可视化挑选（推荐） |
+| `/subagent-create <provider> <model>` | 直连模式：跳过选择，直接注入指定 provider+model | 已在别处查过 provider key，或要注入默认列表里被过滤掉的 provider |
 
-**交互式流程**：列出已启用 provider → 选 model → dry-run 展示计划 → 确认后写入三个 agent 文件（写前自动备份 `.bak`）→ 提示生效方式。
+**交互式流程**：列出已启用 provider → 选 model → dry-run 展示计划 → 确认后写入 `~/.zcode/agents/` 三个 agent 文件（已有文件写前自动备份 `.bak`）→ 提示生效方式。
 
 **provider 过滤规则**：交互式默认只列出 `enabled: true` 的 provider，未启用的（如未填 API Key 的 GLM 官方 API、未开通的 Kimi）会被自动排除，避免选了无法调用的 provider。需要查看全部（含未启用）时，直连模式不受此限制，或手动跑脚本加 `--all`。
 
-> ⚠️ **生效方式**：ZCode 当前无热重载/重置会话功能（关注官方更新），切换后需**关闭并重开当前会话**或**重启 ZCode 客户端**才能生效。当前会话内子智能体仍按旧模型运行。
+> ⚠️ **生效方式**：ZCode 当前无热重载/重置会话功能（关注官方更新），写入后需**关闭并重开当前会话**或**重启 ZCode 客户端**才能生效。
+>
+> ⚠️ **插件升级提示**：升级至 v2.4.0 后插件级 `wakita-governance:wakita-*` 三个 agent 自动消失，仅保留用户级版本。
 
-进阶用法（直接跑脚本，适合 CI/脚本化场景）见 [`scripts/README.md`](plugins/wakita-governance/scripts/README.md)，命令完整执行规范见 [`commands/submodel.md`](plugins/wakita-governance/commands/submodel.md)。
+进阶用法（直接跑脚本，适合 CI/脚本化场景）见 [`scripts/README.md`](plugins/wakita-governance/scripts/README.md)，命令完整执行规范见 [`commands/subagent-create.md`](plugins/wakita-governance/commands/subagent-create.md)。
 
 #### ⚙️ 安装后配置脚本（命令行直连）
 
-除 `/submodel` 命令外，也可直接跑 `inject-agent-model.py` 脚本，适合 CI/脚本化场景或已知 provider key 的用户：
+除 `/subagent-create` 命令外，也可直接跑 `inject-agent-model.py` 脚本，适合 CI/脚本化场景或已知 provider key 的用户：
 
 ```bash
 # 列出已启用的 provider/model（默认排除未启用项；加 --all 看全部）
 python plugins/wakita-governance/scripts/inject-agent-model.py --list
 
-# 切换到指定 provider/model（先 dry-run 确认，再加 --apply 写入）
+# 生成/切换到指定 provider/model（先 dry-run 确认，再加 --apply 写入 ~/.zcode/agents/）
 python plugins/wakita-governance/scripts/inject-agent-model.py --provider <key> --model <id>
 python plugins/wakita-governance/scripts/inject-agent-model.py --provider <key> --model <id> --apply
+
+# 覆盖思考强度（默认取模板值 max）
+python plugins/wakita-governance/scripts/inject-agent-model.py --thought-level high --apply
 
 # 输出 JSON 供程序解析（CI/脚本化场景）
 python plugins/wakita-governance/scripts/inject-agent-model.py --json
@@ -157,13 +164,13 @@ wakita-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json           # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/         # 管控核心 v2.3.0
+│   ├── wakita-governance/         # 管控核心 v2.4.0
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── hooks/                 # 拦截/留痕/注入脚本
-│   │   ├── agents/                # 3 个子智能体（统一结果回传协议）
+│   │   ├── templates/agents/      # 3 个子智能体模板（不注册为插件 agent）
 │   │   ├── skills/                # 1 个 skill（using-wakita）
-│   │   ├── commands/              # audit / lock 命令
+│   │   ├── commands/              # audit / lock / subagent-create 命令
 │   │   └── scripts/               # inject-agent-model.py
 │   └── wakita-toolkit/            # 开发工具包 v1.6.0
 │       ├── .claude-plugin/
