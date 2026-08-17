@@ -89,3 +89,65 @@ ZCode 当前不支持热重载已加载的 agent。写入后需**关闭并重开
 ## 跨平台说明
 
 本脚本用 Python 实现（3.10+），macOS / Linux / Windows 均可直接运行。`provider` 字段为 list 结构（旧版 ZCode）的情况也已兼容，避免在 Windows 上因结构差异报"provider not found"。
+
+---
+
+# Codex 子智能体注入脚本（inject-codex-agents.py）
+
+Codex 不识别 ZCode 的 `~/.zcode/agents/*.md` 与 `commands/*.md`（协议差异详见 `docs/codex-子智能体方案.md`）。本脚本把同一套 scout/builder/auditor 角色渲染为 **Codex 原生 TOML agent**（`~/.codex/agents/`），并把三个 ZCode 斜杠命令替换为 **Codex 自定义提示词**（`~/.codex/prompts/`）。
+
+> 注意：自定义提示词官方已标记 deprecated，且仅在 Codex CLI / IDE 扩展中显示；桌面 App 不显示 `/wakita-*`，请直接调遣 `@wakita-*` agent 或让主智能体执行对应脚本。
+
+## 用法
+
+```bash
+# 查看生效配置（各 agent 取模板默认：scout/builder flash+high，auditor pro+max；~/.codex/config.toml 值仅展示）
+python scripts/inject-codex-agents.py --json
+
+# 人类可读的计划（不落盘）
+python scripts/inject-codex-agents.py --list
+
+# dry-run（不落盘）
+python scripts/inject-codex-agents.py
+
+# 实际写入 ~/.codex/agents/（3 个 TOML）与 ~/.codex/prompts/（3 个提示词）
+python scripts/inject-codex-agents.py --apply
+
+# 三个 agent 统一换模型 / 推理强度 / 沙箱
+python scripts/inject-codex-agents.py --model deepseek-v4-pro --apply
+python scripts/inject-codex-agents.py --reasoning max --apply
+python scripts/inject-codex-agents.py --sandbox read-only --apply
+
+# 只装 agent，不装提示词
+python scripts/inject-codex-agents.py --no-prompts --apply
+```
+
+## 行为
+
+- 模板目录：`templates/codex-agents/wakita-*.toml` 与 `templates/codex-prompts/wakita-*.md`（按脚本自身相对路径定位）
+- 写入目标：`~/.codex/agents/` 与 `~/.codex/prompts/`（尊重 `$CODEX_HOME`，自动创建）
+- `--model` 会对照 `~/.codex/models.json` 校验，不存在则报错并列出可用模型
+- 写前备份已存在的目标文件为 `.bak`；幂等（内容一致则跳过）
+- **不修改 `~/.codex/config.toml`**：Codex standalone TOML agent 自动发现，无需注册
+- 写入 UTF-8 无 BOM，保留模板换行风格
+
+## 参数
+
+| 参数 | 说明 |
+|------|------|
+| `--model <slug>` | 三个 agent 统一模型（缺省保留模板每角色默认） |
+| `--reasoning <档位>` | `model_reasoning_effort`（如 `high`/`max`） |
+| `--sandbox <模式>` | 统一沙箱：`read-only` / `workspace-write` / `danger-full-access` |
+| `--no-prompts` | 跳过提示词安装 |
+| `--json` / `--list` | 只读输出（不落盘） |
+| `--apply` | 实际写入；不加则 dry-run |
+
+## 回滚
+
+```bash
+# 把 .bak 覆盖回目标文件，或直接删除 ~/.codex/agents/wakita-*.toml、~/.codex/prompts/wakita-*.md
+```
+
+## 生效方式
+
+新开会话（或重启 Codex App / CLI）后可用 `@wakita-scout`、`@wakita-builder`、`@wakita-auditor` 调遣；CLI 中提示词显示为 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock`。

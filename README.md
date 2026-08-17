@@ -6,14 +6,15 @@ Akita 自托管的 ZCode 插件仓库 —— 双插件架构，管控与工具�
 
 ```
 wakita-plugins
-├── wakita-governance（管控核心 v2.4.0）    ← 行为约束层
+├── wakita-governance（管控核心 v2.5.0）    ← 行为约束层
 │   ├── 危险操作拦截（PreToolUse）
 │   ├── 审计留痕（PostToolUse）
 │   ├── 工作规范注入（UserPromptSubmit）
 │   ├── 子智能体模板（scout / auditor / builder，由 /subagent-create 生成用户级 agent）
+│   ├── Codex 子智能体模板（TOML × 3，由 inject-codex-agents.py 生成）
 │   ├── 命令（/audit / /lock / /subagent-create）
 │   ├── 1 个 skill（using-wakita：spec/plan/brainstorm 工作流编排）
-│   └── scripts（inject-agent-model.py 生成/切换用户级子智能体）
+│   └── scripts（inject-agent-model.py 生成/切换 ZCode 用户级子智能体；inject-codex-agents.py 生成 Codex 子智能体 + 命令提示词）
 │
     └── wakita-toolkit（开发工具包 v1.6.0）     ← 领域知识层
         └── 23 个 skill（MySQL / Docker / 测试 / 前端 / 架构 / 头脑风暴…）
@@ -54,6 +55,8 @@ wakita-plugins
 
 三个 agent 统一采用「结果回传协议」，向主智能体回传状态/产出物/验证结果/关键决策/依赖与风险/下一步建议，`partial` 不得谎报为 `success`。
 
+**Codex 用户**：ZCode 的 `/subagent-create` 与 `~/.zcode/agents/` 在 Codex 下不可用（协议不兼容）。运行 `python plugins/wakita-governance/scripts/inject-codex-agents.py --apply` 生成 Codex 原生子智能体（`~/.codex/agents/wakita-*.toml`）与命令提示词（`~/.codex/prompts/`），详见 [docs/codex-子智能体方案.md](docs/codex-子智能体方案.md)。提示词已 deprecated 且仅 CLI/IDE 显示，桌面 App 直接调遣 `@wakita-*` agent 或让主智能体执行脚本即可；插件 hooks 在 Codex 下信任后同样生效。
+
 #### 📚 内置 skill（1 个）
 
 `using-wakita` - 任务分级与子智能体调度规范
@@ -63,6 +66,8 @@ wakita-plugins
 - `/audit [行数]` - 查看最近审计日志
 - `/lock <文件路径>` - 临时加锁保护文件
 - `/subagent-create` - 交互式生成/切换三个用户级子智能体（scout/auditor/builder）的运行模型与思考强度
+
+> ⚠️ 以上命令为 ZCode 协议；Codex 下请使用 `inject-codex-agents.py --apply` 安装的 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock` 提示词（已 deprecated，仅 CLI/IDE 显示；桌面 App 直接用 `@wakita-*` agent 或自然语言调用脚本）。
 
 ##### `/subagent-create` 命令详解
 
@@ -103,6 +108,16 @@ python plugins/wakita-governance/scripts/inject-agent-model.py --json
 ```
 
 跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
+
+##### Codex 注入脚本
+
+```bash
+# 查看配置并安装（dry-run 后加 --apply 落盘）
+python plugins/wakita-governance/scripts/inject-codex-agents.py --json
+python plugins/wakita-governance/scripts/inject-codex-agents.py --apply
+```
+
+把三个角色渲染为 `~/.codex/agents/wakita-{scout,builder,auditor}.toml`（Codex 原生 TOML agent），并把命令提示词安装到 `~/.codex/prompts/`。幂等、写前 `.bak` 备份、不修改 `~/.codex/config.toml`。
 
 ---
 
@@ -164,14 +179,16 @@ wakita-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json           # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/         # 管控核心 v2.4.0
+│   ├── wakita-governance/         # 管控核心 v2.5.0
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── hooks/                 # 拦截/留痕/注入脚本
 │   │   ├── templates/agents/      # 3 个子智能体模板（不注册为插件 agent）
+│   │   ├── templates/codex-agents/    # Codex 版子智能体模板（TOML × 3）
+│   │   ├── templates/codex-prompts/   # Codex 命令提示词模板（.md × 3）
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock / subagent-create 命令
-│   │   └── scripts/               # inject-agent-model.py
+│   │   └── scripts/               # inject-agent-model.py（ZCode）+ inject-codex-agents.py（Codex）
 │   └── wakita-toolkit/            # 开发工具包 v1.6.0
 │       ├── .claude-plugin/
 │       │   └── plugin.json

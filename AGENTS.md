@@ -12,19 +12,21 @@ ZCode（Claude Code 兼容）自托管插件仓库，提供 AI 开发工具的�
 wakita-plugins/
 ├── .claude-plugin/marketplace.json   # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/            # 管控核心（v2.4.0）
+│   ├── wakita-governance/            # 管控核心（v2.5.0）
 │   │   ├── hooks/                    # PreToolUse / PostToolUse / UserPromptSubmit
 │   │   ├── templates/agents/         # 子智能体模板（scout/auditor/builder，不注册为插件 agent）
+│   │   ├── templates/codex-agents/   # Codex 版子智能体模板（TOML × 3）
+│   │   ├── templates/codex-prompts/  # Codex 命令提示词模板（.md × 3）
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock / subagent-create 命令
-│   │   └── scripts/                  # inject-agent-model.py 生成/切换用户级子智能体
+│   │   └── scripts/                  # inject-agent-model.py（ZCode）+ inject-codex-agents.py（Codex）
 │   └── wakita-toolkit/               # 开发工具包（v1.6.0）
 │       └── skills/                   # 23 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
 
-## 插件一：wakita-governance（管控核心，v2.4.0）
+## 插件一：wakita-governance（管控核心，v2.5.0）
 
 提供危险操作拦截、写操作留痕、工作规范注入、子智能体调度与审计命令。
 
@@ -52,9 +54,12 @@ wakita-plugins/
 - `/lock <文件路径>` - 临时加锁保护文件
 - `/subagent-create` - 交互式生成/切换三个用户级子智能体（读 config.json 列出可用项供用户选，写入 `~/.zcode/agents/`，注入后提示需重开会话生效）。首次运行即初始化生成；后续运行切换 model / thoughtLevel。支持直连模式 `/subagent-create <provider> <model>`。交互式默认只列出「可用」的 provider（`enabled: true` **且** API Key 非空），已启用但未填 Key 的内置 provider（如 GLM 官方、Z.ai）自动排除；直连模式不受此限。详见 `commands/subagent-create.md`。
 
+> **Codex 环境**：以上三个命令是 ZCode 协议，Codex 不识别。Codex 下改用 `inject-codex-agents.py --apply` 生成 `~/.codex/agents/*.toml` 子智能体，并安装 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock` 提示词到 `~/.codex/prompts/`（提示词已 deprecated，仅 CLI/IDE 显示；桌面 App 直接用 `@wakita-*` agent 或自然语言调用脚本）。插件 hooks 在 Codex 下信任后同样生效。详见 `docs/codex-子智能体方案.md`。
+
 ### 安装后配置脚本
 
 - `scripts/inject-agent-model.py` - 把 `templates/agents/` 模板渲染（注入 `model:` / `thoughtLevel:`）后写入 `~/.zcode/agents/`。ZCode 不展开 agent frontmatter 里的环境变量，切换 provider/model 需跑此脚本（或 `/subagent-create` 命令）。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
+- `scripts/inject-codex-agents.py` - Codex 专用：把 `templates/codex-agents/*.toml` 渲染写入 `~/.codex/agents/`，并把 `templates/codex-prompts/*.md` 安装到 `~/.codex/prompts/`。幂等 + `.bak` 备份，不修改 `~/.codex/config.toml`。详见 `docs/codex-子智能体方案.md`。
 
 ## 插件二：wakita-toolkit（开发工具包，v1.6.0）
 

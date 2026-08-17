@@ -6,6 +6,7 @@
 
 import json
 import os
+import sys
 from datetime import datetime
 
 # 日志文件：默认放在插件目录下，被 .gitignore 排除
@@ -55,3 +56,26 @@ def read_audit_lines(n=50):
         return lines[-n:]
     except OSError:
         return []
+
+
+def main(argv=None):
+    """CLI：`audit.py read [行数]` 输出最近 N 条日志；`audit.py path` 输出日志路径。"""
+    args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] == "read":
+        n = 50
+        if len(args) > 1:
+            try:
+                n = max(1, int(args[1]))
+            except ValueError:
+                n = 50
+        sys.stdout.write("".join(read_audit_lines(n)))
+    elif args and args[0] == "path":
+        sys.stdout.write(_AUDIT_LOG + "\n")
+    else:
+        sys.stderr.write("usage: audit.py read [行数] | path\n")
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

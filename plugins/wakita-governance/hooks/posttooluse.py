@@ -14,6 +14,14 @@ import os
 import re
 import sys
 
+# Codex/ZCode 均按 UTF-8 解析 hook 的 stdin/stdout；Windows 下 Python 默认使用
+# 本地代码页（如 GBK），需显式统一为 UTF-8，否则中文输出会乱码。
+for _stream in (sys.stdin, sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError, OSError):
+        pass
+
 _HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _HOOKS_DIR not in sys.path:
     sys.path.insert(0, _HOOKS_DIR)

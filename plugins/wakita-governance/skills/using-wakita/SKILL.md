@@ -214,6 +214,16 @@ MasterAgent必须读 `状态` 字段：
 
 派子智能体前，先检测 `~/.zcode/agents/` 下是否已生成三个 agent 文件（wakita-scout / wakita-builder / wakita-auditor）。**未生成时提醒用户先运行 `/subagent-create` 交互式生成，不要直接调度**（会提示 agent 不存在）。后续切换模型/思考强度（thoughtLevel）也用 `/subagent-create`。写入后需重开会话生效。
 
+## Codex 环境
+
+在 **Codex**（桌面 App / CLI）下运行本工作流时，ZCode 的 `/subagent-create` 与 `~/.zcode/agents/` **不适用**（协议不兼容，原因见 `docs/codex-子智能体方案.md`）。改用：
+
+1. **首次生成**：运行 `python plugins/wakita-governance/scripts/inject-codex-agents.py --apply`，把 scout/builder/auditor 渲染为 `~/.codex/agents/wakita-*.toml`（Codex 原生 TOML agent），并安装命令提示词到 `~/.codex/prompts/`。
+2. **调遣方式**：对话中 `@wakita-scout` / `@wakita-builder` / `@wakita-auditor`，或用 Codex 的 spawn/multi-agent 工具按同样角色提示派发；**分级与调度流程不变**（小→直接干，中→scout→MasterAgent 实现→auditor，大→scout→builder→auditor）。
+3. **命令等价物**：Codex CLI 中 `/wakita-subagent-create`（生成/切换）、`/wakita-audit`（审计日志）、`/wakita-lock`（保护清单）为 ZCode 版命令的替代提示词。
+   - ⚠️ 官方已标记自定义提示词 deprecated，且只在 Codex CLI / IDE 扩展中显示；**桌面 App 不显示 `/wakita-*`**，直接用自然语言让主智能体执行对应脚本，或调遣 `@wakita-*` agent。
+4. **hooks 现状**：Codex 经插件 `hooks.json` 加载本插件的 PreToolUse/PostToolUse/UserPromptSubmit（首次需在 Codex 中信任，见 `~/.codex/config.toml` 的 `[hooks.state]`）。危险拦截/审计留痕/规范注入在 Codex 下**同样生效**；但运行数据（`audit.log`、`rules.protected.json`）写入**插件缓存副本**（`~/.codex/plugins/cache/wakita-plugins/wakita-governance/<版本>/hooks/`），`/wakita-audit`、`/wakita-lock` 提示词已按此路径读写。
+
 ---
 
 ## 验证工具

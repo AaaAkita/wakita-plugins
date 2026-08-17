@@ -9,6 +9,14 @@
 import json
 import sys
 
+# Codex/ZCode 均按 UTF-8 解析 hook 的 stdin/stdout；Windows 下 Python 默认使用
+# 本地代码页（如 GBK），需显式统一为 UTF-8，否则中文输出会乱码。
+for _stream in (sys.stdin, sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError, OSError):
+        pass
+
 # 工作规范（始终注入，软提醒）
 _NORMS = """\
 [wakita 工作规范]

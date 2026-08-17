@@ -182,6 +182,23 @@ def list_providers(providers: dict, include_disabled: bool = False) -> None:
             print(f"  model: {mid}")
 
 
+def resolve_default_provider(providers: dict) -> str:
+    """Pick a sensible default provider key when the built-in default is absent.
+
+    Keeps the historical default only when it is *usable* (enabled + non-empty
+    API key); otherwise prefers the first usable provider, then any provider,
+    and finally returns the historical default unchanged.
+    """
+    if DEFAULT_PROVIDER in providers and providers[DEFAULT_PROVIDER].get("usable"):
+        return DEFAULT_PROVIDER
+    usable = [k for k, v in providers.items() if v.get("usable")]
+    if usable:
+        return usable[0]
+    if providers:
+        return next(iter(providers))
+    return DEFAULT_PROVIDER
+
+
 def print_providers_json(providers: dict, include_disabled: bool = False) -> None:
     """Print providers as JSON for command/slash-command consumption.
 
@@ -298,6 +315,23 @@ def main() -> int:
     args = parser.parse_args()
 
     providers = load_providers(CONFIG_PATH)
+
+    # v2.5.0: the historical DeepSeek default key may be absent or disabled /
+    # missing an API key on this machine's config.json. Fall back to the first
+    # usable provider so bare `--apply` runs keep generating working agents.
+    default_usable = (
+        DEFAULT_PROVIDER in providers
+        and bool(providers[DEFAULT_PROVIDER].get("usable"))
+    )
+    if args.provider == DEFAULT_PROVIDER and not default_usable:
+        fallback = resolve_default_provider(providers)
+        if fallback != DEFAULT_PROVIDER:
+            print(
+                f"Note: default provider '{DEFAULT_PROVIDER}' is not usable in config "
+                f"(disabled or missing API key); falling back to '{fallback}'.",
+                file=sys.stderr,
+            )
+        args.provider = fallback
 
     # ---- read-only modes: --list / --json ----
     if args.json:
