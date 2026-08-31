@@ -12,7 +12,7 @@ ZCode（Claude Code 兼容）自托管插件仓库，提供 AI 开发工具的�
 wakita-plugins/
 ├── .claude-plugin/marketplace.json   # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/            # 管控核心（v2.5.0）
+│   ├── wakita-governance/            # 管控核心（v2.6.0）
 │   │   ├── hooks/                    # PreToolUse / PostToolUse / UserPromptSubmit
 │   │   ├── templates/agents/         # 子智能体模板（scout/auditor/builder，不注册为插件 agent）
 │   │   ├── templates/codex-agents/   # Codex 版子智能体模板（TOML × 3）
@@ -26,7 +26,7 @@ wakita-plugins/
 └── AGENTS.md
 ```
 
-## 插件一：wakita-governance（管控核心，v2.5.0）
+## 插件一：wakita-governance（管控核心，v2.6.0）
 
 提供危险操作拦截、写操作留痕、工作规范注入、子智能体调度与审计命令。
 
@@ -98,6 +98,7 @@ wakita-plugins/
 - 所有 hook：stdin 读 JSON → stdout 输出 JSON，始终 `exit 0`
 - 阻断机制靠 `permissionDecision: "deny"`，不靠退出码
 - 异常一律降级为 `systemMessage` 告警，不阻塞正常工作
+- Hook 脚本统一 `wakita-` 前缀，systemMessage 带 `[wakita]` 标识（与 mimosa 安全扫描区分，v2.6.0 起）
 - 审计日志写入 `hooks/audit.log`（被 .gitignore 排除）
 
 ## 编码约定

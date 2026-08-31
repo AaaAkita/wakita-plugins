@@ -1,30 +1,30 @@
 {
   "name": "wakita-governance",
-  "version": "2.5.0",
-  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议，由 /subagent-create 生成用户级 agent）+ audit/lock/subagent-create 命令。v2.5.0 新增 Codex 支持（TOML agents + 命令提示词）。",
+  "version": "2.6.0",
+  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议，由 /subagent-create 生成用户级 agent）+ audit/lock/subagent-create 命令。v2.6.0 hook 脚本统一 wakita- 前缀、消息带 [wakita] 标识，与 mimosa 安全扫描区分。",
   "skills": "./skills/",
   "commands": "./commands/",
   "hooks": [
     {
       "event": "PreToolUse",
-      "command": "python \"./hooks/pretooluse.py\"",
+      "command": "python \"./hooks/wakita-pretooluse.py\"",
       "timeout": 10
     },
     {
       "event": "PostToolUse",
       "matcher": "Edit|Write|MultiEdit|Bash",
-      "command": "python \"./hooks/posttooluse.py\"",
+      "command": "python \"./hooks/wakita-posttooluse.py\"",
       "timeout": 10
     },
     {
       "event": "PostToolUse",
       "matcher": "Bash",
-      "command": "python \"./hooks/posttooluse_merge.py\"",
+      "command": "python \"./hooks/wakita-posttooluse-merge.py\"",
       "timeout": 10
     },
     {
       "event": "UserPromptSubmit",
-      "command": "python \"./hooks/userpromptsubmit.py\"",
+      "command": "python \"./hooks/wakita-userpromptsubmit.py\"",
       "timeout": 10
     }
   ],

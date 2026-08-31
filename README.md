@@ -6,7 +6,7 @@ Akita 自托管的 ZCode 插件仓库 —— 双插件架构，管控与工具�
 
 ```
 wakita-plugins
-├── wakita-governance（管控核心 v2.5.0）    ← 行为约束层
+├── wakita-governance（管控核心 v2.6.0）    ← 行为约束层
 │   ├── 危险操作拦截（PreToolUse）
 │   ├── 审计留痕（PostToolUse）
 │   ├── 工作规范注入（UserPromptSubmit）
@@ -179,7 +179,7 @@ wakita-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json           # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/         # 管控核心 v2.5.0
+│   ├── wakita-governance/         # 管控核心 v2.6.0
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── hooks/                 # 拦截/留痕/注入脚本

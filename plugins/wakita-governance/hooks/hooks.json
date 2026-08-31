@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py\"",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/wakita-pretooluse.py\"",
             "timeout": 10
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse.py\"",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/wakita-posttooluse.py\"",
             "timeout": 10
           }
         ],
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse_merge.py\"",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/wakita-posttooluse-merge.py\"",
             "timeout": 10
           }
         ],
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/userpromptsubmit.py\"",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/wakita-userpromptsubmit.py\"",
             "timeout": 10
           }
         ]
