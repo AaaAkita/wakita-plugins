@@ -1,6 +1,6 @@
 """规则配置中心 —— 危险命令黑名单、保护文件清单。
 
-被 pretooluse.py / posttooluse.py / commands/lock.md 共同引用。
+被 wakita-pretooluse.py / wakita-posttooluse.py / commands/lock.md 共同引用。
 保护清单存在 WAKITA_PROTECT_FILE（默认 rules.protected.json），
 lock 命令可往里追加文件，pretooluse 实时读取。
 """
@@ -8,9 +8,10 @@ lock 命令可往里追加文件，pretooluse 实时读取。
 import json
 import os
 import re
+from pathlib import Path
 
 # 保护清单文件路径（与本文件同目录）
-_PROTECT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rules.protected.json")
+_PROTECT_FILE = Path(__file__).resolve().parent / "rules.protected.json"
 
 # 默认保护文件（lock 命令追加的会合并进来）
 DEFAULT_PROTECTED_FILES = [
@@ -75,14 +76,16 @@ def load_protected_files():
 def add_protected_file(path):
     """lock 命令调用：追加一个保护文件。返回是否新增。"""
     files = load_protected_files()
-    # 标准化路径
-    norm = path.replace("\\", "/").lstrip("./")
+    # 标准化路径：仅接受仓库内相对路径，逐段校验，拒绝上级目录段
+    segments = [s for s in path.replace("\\", "/").split("/") if s not in ("", ".")]
+    if not segments or os.pardir in segments or os.path.isabs(path):
+        return False
+    norm = "/".join(segments)
     if norm in files:
         return False
     files.append(norm)
     data = {"protected_files": [f for f in files if f not in DEFAULT_PROTECTED_FILES]}
-    with open(_PROTECT_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    _PROTECT_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return True
 
 

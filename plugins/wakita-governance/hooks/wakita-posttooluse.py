@@ -70,6 +70,11 @@ def main():
     except (json.JSONDecodeError, ValueError):
         sys.exit(0)
 
+    # 框架侧 hook 链（如 mimosa 扫描）触发的调用非用户行为，不进 audit.log；
+    # 该标识字段是否由 ZCode 透传待验证，缺省时静默放行，不影响现有行为。
+    if input_data.get("hook_chain"):
+        sys.exit(0)
+
     tool_name = input_data.get("tool_name", "")
     tool_input = input_data.get("tool_input", {})
 
