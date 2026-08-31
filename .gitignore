@@ -13,6 +13,7 @@ audit.log
 Thumbs.db
 desktop.ini
 .zcode/plans/
+.mimosa/
 
 # 编辑器
 .vscode/
