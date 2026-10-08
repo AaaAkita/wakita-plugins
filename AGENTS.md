@@ -20,8 +20,8 @@ wakita-plugins/
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock / subagent-create 命令
 │   │   └── scripts/                  # inject-agent-model.py（ZCode）+ inject-codex-agents.py（Codex）
-│   └── wakita-toolkit/               # 开发工具包（v1.6.0）
-│       └── skills/                   # 23 个领域 skill（见下文）
+│   └── wakita-toolkit/               # 开发工具包（v1.7.0）
+│       └── skills/                   # 29 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
@@ -61,22 +61,27 @@ wakita-plugins/
 - `scripts/inject-agent-model.py` - 把 `templates/agents/` 模板渲染（注入 `model:` / `thoughtLevel:`）后写入 `~/.zcode/agents/`。ZCode 不展开 agent frontmatter 里的环境变量，切换 provider/model 需跑此脚本（或 `/subagent-create` 命令）。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 - `scripts/inject-codex-agents.py` - Codex 专用：把 `templates/codex-agents/*.toml` 渲染写入 `~/.codex/agents/`，并把 `templates/codex-prompts/*.md` 安装到 `~/.codex/prompts/`。幂等 + `.bak` 备份，不修改 `~/.codex/config.toml`。详见 `docs/codex-子智能体方案.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.6.0）
+## 插件二：wakita-toolkit（开发工具包，v1.7.0）
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
-### 内置 skill（23 个）
+### 内置 skill（29 个）
 
 | Skill | 用途 |
 |-------|------|
 | `brainstorm` | 创作性头脑风暴（画图、对比方案，只思考不写代码） |
+| `cd-deploy-verification` | CD 部署验证与回滚后诊断（healthy ≠ deployed） |
 | `chinese-commit-messages` | git commit message 强制中文 |
 | `code-annotation` | 代码输出中文标注（变量名/函数名首次出现处附加翻译） |
 | `code-reuse-audit` | 代码冗余审查与重构 |
+| `compose-cd-deploy-pitfalls` | Docker Compose CD 部署三类隐蔽陷阱与修复范式 |
+| `config-sync-guard` | 跨环境同步可在线编辑配置的守卫流程（防覆盖用户新编辑） |
 | `docker-compose-prod-default` | Docker Compose 生产/开发默认语义规范 |
 | `docker-expert` | Docker 构建/部署最佳实践（含镜像源测试、超时预估） |
 | `frontend-dashboard-layout-spec` | 看板类页面 CSS 布局规范 |
+| `idempotent-migration` | 多步 DDL 迁移幂等守卫（Duplicate column / 半个迁移修复） |
 | `maxscript-pitfalls` | 3ds Max MaxScript 坑点指南 |
+| `mysql-binlog-recovery` | MySQL binlog 前行镜像数据恢复流程 |
 | `mysql-expert` | MySQL 数据库设计/SQL 优化 |
 | `one-way-sync-antipattern` | 单向同步反模式审查（设计 vs 实现偏差检测） |
 | `operate-through-channels` | 通过正确渠道修复：修代码不修数据 / 公开接口操作 / 端到端验证 |
@@ -90,6 +95,7 @@ wakita-plugins/
 | `robust-architecture` | 分层架构/API 规范/目录结构 |
 | `root-cause-no-patch` | 禁止临时补丁，必须定位根因 |
 | `schema-migration-convergence` | 数据库迁移收敛（支持 7 种技术栈） |
+| `silent-failure-audit` | 静默失败链路审计（兜底/回写/通知是否从未生效） |
 | `test-quality-principles` | 测试质量四条铁律 |
 | `vue2-elementui-standards` | Vue2 + ElementUI 响应式组件标准化 |
 
