@@ -16,8 +16,8 @@ wakita-plugins
 │   ├── 1 个 skill（using-wakita：spec/plan/brainstorm 工作流编排）
 │   └── scripts（inject-agent-model.py 生成/切换 ZCode 用户级子智能体；inject-codex-agents.py 生成 Codex 子智能体 + 命令提示词）
 │
-    └── wakita-toolkit（开发工具包 v1.9.0）     ← 领域知识层
-        └── 38 个 skill（MySQL / Docker / 测试 / 前端 / 架构 / 运维 / 清理房间审查…）
+    └── wakita-toolkit（开发工具包 v1.10.0）     ← 领域知识层
+        └── 39 个 skill（MySQL / Docker / 测试 / 前端 / 架构 / 运维 / 设计系统审查…）
 ```
 
 两个插件**独立安装、独立维护、独立开关**，互不依赖。
@@ -124,7 +124,7 @@ python plugins/wakita-governance/scripts/inject-codex-agents.py --apply
 
 ### wakita-toolkit - 开发工具包
 
-#### 📚 内置 skill（38 个）
+#### 📚 内置 skill（39 个）
 
 | Skill | 用途 |
 |-------|------|
@@ -145,6 +145,7 @@ python plugins/wakita-governance/scripts/inject-codex-agents.py --apply
 | `docker-expert` | Docker 构建/部署最佳实践（含镜像源测试、超时预估） |
 | `external-integration-doc` | 对外接口对接文档写作（契约交付物，禁止内部行话） |
 | `frontend-dashboard-layout-spec` | 看板类页面布局与信息架构（观察窗口 > 统计报表） |
+| `frontend-design-system-audit` | 前端设计系统一致性审查（令牌完整性/UI 库主题桥接/断点/跨 app 对齐） |
 | `idempotent-migration` | 多步 DDL 迁移幂等守卫与大表锁窗 |
 | `maxscript-pitfalls` | 3ds Max MaxScript 坑点指南 |
 | `mysql-binlog-recovery` | MySQL binlog 前行镜像数据恢复流程 |
@@ -205,10 +206,10 @@ wakita-plugins/
 │   │   ├── skills/                # 1 个 skill（using-wakita）
 │   │   ├── commands/              # audit / lock / subagent-create 命令
 │   │   └── scripts/               # inject-agent-model.py（ZCode）+ inject-codex-agents.py（Codex）
-│   └── wakita-toolkit/            # 开发工具包 v1.9.0
+│   └── wakita-toolkit/            # 开发工具包 v1.10.0
 │       ├── .claude-plugin/
 │       │   └── plugin.json
-        │       └── skills/                # 38 个领域 skill
+        │       └── skills/                # 39 个领域 skill
 ├── docs/                          # 操作手册
 └── README.md
 ```

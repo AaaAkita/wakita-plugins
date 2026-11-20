@@ -20,8 +20,8 @@ wakita-plugins/
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock / subagent-create 命令
 │   │   └── scripts/                  # inject-agent-model.py（ZCode）+ inject-codex-agents.py（Codex）
-│   └── wakita-toolkit/               # 开发工具包（v1.9.0）
-│       └── skills/                   # 38 个领域 skill（见下文）
+│   └── wakita-toolkit/               # 开发工具包（v1.10.0）
+│       └── skills/                   # 39 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
@@ -32,7 +32,7 @@ wakita-plugins/
 
 工作流编排：查 spec（docs/specs/）→ 分级 → brainstorm（需求模糊时）→ 写 spec → Plan（EnterPlanMode）→ 调度 scout/builder/auditor（深水区 Bug 升级 ace）→ 标记 spec 完成。
 
-**大模块收尾**：写完后、继续叠加功能前，加载 `clean-home`（清理房间）做结构审查。它是编排 skill，不含审查规则，按步骤加载 `spec-alignment-review` / `robust-architecture` / `project-compliance-check` / `test-quality-principles` / `ai-code-failure-modes` / `code-structure-metrics` / `code-reuse-audit` 等。UserPromptSubmit hook 会常驻提醒并在命中触发词时加强提示。
+**大模块收尾**：写完后、继续叠加功能前，加载 `clean-home`（清理房间）做结构审查。它是编排 skill，不含审查规则，按步骤加载 `spec-alignment-review` / `robust-architecture` / `project-compliance-check` / `test-quality-principles` / `ai-code-failure-modes` / `code-structure-metrics` / `code-reuse-audit` / `frontend-design-system-audit` 等。UserPromptSubmit hook 会常驻提醒并在命中触发词时加强提示。
 
 **子会话延续**：同一任务/阶段/角色复用已有子智能体会话（ZCode 用 `SendMessage` + 原 `agentId`），不要无理由新开；换阶段、换角色或会话失效才新开。重开会丢失上下文缓存，`wakita-ace` 等贵模型成本尤其高。
 
@@ -66,11 +66,11 @@ wakita-plugins/
 - `scripts/inject-agent-model.py` - 把 `templates/agents/` 模板渲染（注入 `model:` / `thoughtLevel:`）后写入 `~/.zcode/agents/`。ZCode 不展开 agent frontmatter 里的环境变量，切换 provider/model 需跑此脚本（或 `/subagent-create` 命令）。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 - `scripts/inject-codex-agents.py` - Codex 专用：把 `templates/codex-agents/*.toml` 渲染写入 `~/.codex/agents/`，并把 `templates/codex-prompts/*.md` 安装到 `~/.codex/prompts/`。幂等 + `.bak` 备份，不修改 `~/.codex/config.toml`。详见 `docs/codex-子智能体方案.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.9.0）
+## 插件二：wakita-toolkit（开发工具包，v1.10.0）
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
-### 内置 skill（38 个）
+### 内置 skill（39 个）
 
 | Skill | 用途 |
 |-------|------|
@@ -91,6 +91,7 @@ wakita-plugins/
 | `docker-expert` | Docker 构建/部署最佳实践（含镜像源测试、超时预估） |
 | `external-integration-doc` | 对外接口对接文档写作（契约交付物，禁止内部行话） |
 | `frontend-dashboard-layout-spec` | 看板类页面布局与信息架构（观察窗口 > 统计报表） |
+| `frontend-design-system-audit` | 前端设计系统一致性审查（令牌完整性/UI 库主题桥接/断点/跨 app 对齐） |
 | `idempotent-migration` | 多步 DDL 迁移幂等守卫与大表锁窗 |
 | `maxscript-pitfalls` | 3ds Max MaxScript 坑点指南 |
 | `mysql-binlog-recovery` | MySQL binlog 前行镜像数据恢复流程 |
