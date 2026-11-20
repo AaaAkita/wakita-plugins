@@ -1,6 +1,8 @@
 ---
 name: pyinstaller-packaging
-description: 将 Python 项目打包为 Windows 可分发的 .exe 可执行程序。当用户要求"打包""构建 exe""出包""PyInstaller""打一个 vX.X 版本"或涉及 build.py/dist 产物时使用。
+description: >
+  将 Python 项目打包为 Windows 可分发的 .exe 可执行程序。当用户要求"打包""构建 exe""出包""PyInstaller""打一个 vX.X 版本"或涉及 build.py/dist 产物时使用。
+  触发词：PyInstaller、打包 exe、构建 exe、出包、build.py、dist、onefile、onedir、版本号嵌入、图标、数据文件、--add-data。
 ---
 
 # Python 打包 EXE——PyInstaller 实战
@@ -94,3 +96,9 @@ pyinstaller MyApp.spec
 3. **拼装命令**：从 JSON 提取参数，执行 `pyinstaller`
 4. **验证**：在 dist/ 目录运行 .exe，确认功能正常
 5. **保存并分发**：写回 JSON → zip 压缩命名含版本号
+
+## 适用边界
+
+- 目标是 **Windows .exe**。macOS `.app` / Linux 二进制的打包参数、代码签名与分发方式不同，不直接套用。
+- 只覆盖 PyInstaller。Nuitka、cx_Freeze、Briefcase 的配置模型不同。
+- `--add-data` 分隔符、版本信息文件、杀软误报是 Windows 特有场景；跨平台项目需分别验证。

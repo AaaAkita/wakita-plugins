@@ -12,35 +12,40 @@ ZCode（Claude Code 兼容）自托管插件仓库，提供 AI 开发工具的�
 wakita-plugins/
 ├── .claude-plugin/marketplace.json   # marketplace 声明（注册两个插件）
 ├── plugins/
-│   ├── wakita-governance/            # 管控核心（v2.6.0）
+│   ├── wakita-governance/            # 管控核心（v2.8.0）
 │   │   ├── hooks/                    # PreToolUse / PostToolUse / UserPromptSubmit
-│   │   ├── templates/agents/         # 子智能体模板（scout/auditor/builder，不注册为插件 agent）
-│   │   ├── templates/codex-agents/   # Codex 版子智能体模板（TOML × 3）
+│   │   ├── templates/agents/         # 子智能体模板（scout/auditor/builder/ace，不注册为插件 agent）
+│   │   ├── templates/codex-agents/   # Codex 版子智能体模板（TOML × 4）
 │   │   ├── templates/codex-prompts/  # Codex 命令提示词模板（.md × 3）
 │   │   ├── skills/                   # 1 个 skill：using-wakita
 │   │   ├── commands/                 # audit / lock / subagent-create 命令
 │   │   └── scripts/                  # inject-agent-model.py（ZCode）+ inject-codex-agents.py（Codex）
-│   └── wakita-toolkit/               # 开发工具包（v1.7.0）
-│       └── skills/                   # 29 个领域 skill（见下文）
+│   └── wakita-toolkit/               # 开发工具包（v1.9.0）
+│       └── skills/                   # 38 个领域 skill（见下文）
 ├── docs/                             # 操作手册
 └── AGENTS.md
 ```
 
-## 插件一：wakita-governance（管控核心，v2.6.0）
+## 插件一：wakita-governance（管控核心，v2.8.0）
 
 提供危险操作拦截、写操作留痕、工作规范注入、子智能体调度与审计命令。
 
-工作流编排：查 spec（docs/specs/）→ 分级 → brainstorm（需求模糊时）→ 写 spec → Plan（EnterPlanMode）→ 调度 scout/builder/auditor → 标记 spec 完成。
+工作流编排：查 spec（docs/specs/）→ 分级 → brainstorm（需求模糊时）→ 写 spec → Plan（EnterPlanMode）→ 调度 scout/builder/auditor（深水区 Bug 升级 ace）→ 标记 spec 完成。
+
+**大模块收尾**：写完后、继续叠加功能前，加载 `clean-home`（清理房间）做结构审查。它是编排 skill，不含审查规则，按步骤加载 `spec-alignment-review` / `robust-architecture` / `project-compliance-check` / `test-quality-principles` / `ai-code-failure-modes` / `code-structure-metrics` / `code-reuse-audit` 等。UserPromptSubmit hook 会常驻提醒并在命中触发词时加强提示。
+
+**子会话延续**：同一任务/阶段/角色复用已有子智能体会话（ZCode 用 `SendMessage` + 原 `agentId`），不要无理由新开；换阶段、换角色或会话失效才新开。重开会丢失上下文缓存，`wakita-ace` 等贵模型成本尤其高。
 
 ### 子智能体（用户级生成，v2.4.0 起）
 
 - `wakita-scout` - 编码前探索现有结构（只读）
 - `wakita-auditor` - 代码审查，带文件:行号证据
 - `wakita-builder` - 按 Spec/Plan 实现代码 + 自验证
+- `wakita-ace` - 高难度攻坚（常规手段失效或严重 Bug 多次复现时做根因定位与最小变更方案设计，只读）
 
-插件**不直接分发** agent（`templates/agents/` 只是模板，不在 ZCode 插件 agent 发现路径上）。首次使用运行 `/subagent-create`，把三个 agent 渲染写入用户级目录 `~/.zcode/agents/`（含 `model:` + `thoughtLevel:` + `injectAgentsMd:`），重开会话后可调遣；用户可自由编辑这些文件。
+插件**不直接分发** agent（`templates/agents/` 只是模板，不在 ZCode 插件 agent 发现路径上）。首次使用运行 `/subagent-create`，把四个 agent 渲染写入用户级目录 `~/.zcode/agents/`（含 `model:` + `thoughtLevel:` + `injectAgentsMd:`），重开会话后可调遣；用户可自由编辑这些文件。
 
-三个 agent 统一采用「结果回传协议」（`<result_protocol>` 章节），向主智能体回传状态/产出物/验证结果/关键决策/依赖与风险/下一步建议，`partial` 不得谎报为 `success`。
+四个 agent 统一采用「结果回传协议」（`<result_protocol>` 章节），向主智能体回传状态/产出物/验证结果/关键决策/依赖与风险/下一步建议，`partial` 不得谎报为 `success`。
 
 ### 内置 skill（1 个）
 
@@ -52,7 +57,7 @@ wakita-plugins/
 
 - `/audit [行数]` - 查看最近审计日志
 - `/lock <文件路径>` - 临时加锁保护文件
-- `/subagent-create` - 交互式生成/切换三个用户级子智能体（读 config.json 列出可用项供用户选，写入 `~/.zcode/agents/`，注入后提示需重开会话生效）。首次运行即初始化生成；后续运行切换 model / thoughtLevel。支持直连模式 `/subagent-create <provider> <model>`。交互式默认只列出「可用」的 provider（`enabled: true` **且** API Key 非空），已启用但未填 Key 的内置 provider（如 GLM 官方、Z.ai）自动排除；直连模式不受此限。详见 `commands/subagent-create.md`。
+- `/subagent-create` - 交互式生成/切换四个用户级子智能体（读 config.json 列出可用项供用户选，写入 `~/.zcode/agents/`，注入后提示需重开会话生效）。首次运行即初始化生成；后续运行切换 model / thoughtLevel。支持直连模式 `/subagent-create <provider> <model>`。交互式默认只列出「可用」的 provider（`enabled: true` **且** API Key 非空），已启用但未填 Key 的内置 provider（如 GLM 官方、Z.ai）自动排除；直连模式不受此限。详见 `commands/subagent-create.md`。
 
 > **Codex 环境**：以上三个命令是 ZCode 协议，Codex 不识别。Codex 下改用 `inject-codex-agents.py --apply` 生成 `~/.codex/agents/*.toml` 子智能体，并安装 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock` 提示词到 `~/.codex/prompts/`（提示词已 deprecated，仅 CLI/IDE 显示；桌面 App 直接用 `@wakita-*` agent 或自然语言调用脚本）。插件 hooks 在 Codex 下信任后同样生效。详见 `docs/codex-子智能体方案.md`。
 
@@ -61,43 +66,52 @@ wakita-plugins/
 - `scripts/inject-agent-model.py` - 把 `templates/agents/` 模板渲染（注入 `model:` / `thoughtLevel:`）后写入 `~/.zcode/agents/`。ZCode 不展开 agent frontmatter 里的环境变量，切换 provider/model 需跑此脚本（或 `/subagent-create` 命令）。跨平台 Python，同时支持 config.json 中 `provider` 为 dict / list 两种结构。详见 `scripts/README.md`。
 - `scripts/inject-codex-agents.py` - Codex 专用：把 `templates/codex-agents/*.toml` 渲染写入 `~/.codex/agents/`，并把 `templates/codex-prompts/*.md` 安装到 `~/.codex/prompts/`。幂等 + `.bak` 备份，不修改 `~/.codex/config.toml`。详见 `docs/codex-子智能体方案.md`。
 
-## 插件二：wakita-toolkit（开发工具包，v1.7.0）
+## 插件二：wakita-toolkit（开发工具包，v1.9.0）
 
 领域 skill 集合，可按需独立开关。纯 skill 插件，不依赖外部 MCP 服务。
 
-### 内置 skill（29 个）
+### 内置 skill（38 个）
 
 | Skill | 用途 |
 |-------|------|
+| `ai-code-failure-modes` | AI 生成代码特有失败模式（stub 冒充/快乐路径/幻觉 API/配置未验证） |
 | `brainstorm` | 创作性头脑风暴（画图、对比方案，只思考不写代码） |
-| `cd-deploy-verification` | CD 部署验证与回滚后诊断（healthy ≠ deployed） |
+| `canvas-interaction-space` | Canvas/WebGL 与 DOM 叠加层错位、屏幕像素 vs 模型空间交互规范 |
+| `cd-deploy-verification` | CD 部署验证、回滚后诊断与部署事故边界（healthy ≠ deployed） |
 | `chinese-commit-messages` | git commit message 强制中文 |
+| `chinese-technical-writing` | 中文技术表达（spec/排障汇报/错误提示/代码注释） |
+| `clean-home` | 清理房间：大模块结构审查编排入口（只路由，按步骤加载领域 skill） |
 | `code-annotation` | 代码输出中文标注（变量名/函数名首次出现处附加翻译） |
 | `code-reuse-audit` | 代码冗余审查与重构 |
+| `code-structure-metrics` | 代码结构量化审查（硬编码/超长/理解困难/耦合） |
 | `compose-cd-deploy-pitfalls` | Docker Compose CD 部署三类隐蔽陷阱与修复范式 |
-| `config-sync-guard` | 跨环境同步可在线编辑配置的守卫流程（防覆盖用户新编辑） |
+| `config-sync-guard` | 跨环境同步可在线编辑配置的守卫流程（防覆盖用户新编辑/破坏性 DB 操作） |
+| `display-source-normalization` | 多数据源展示模型 + 适配器规范化（渲染层禁来源分支） |
 | `docker-compose-prod-default` | Docker Compose 生产/开发默认语义规范 |
 | `docker-expert` | Docker 构建/部署最佳实践（含镜像源测试、超时预估） |
-| `frontend-dashboard-layout-spec` | 看板类页面 CSS 布局规范 |
-| `idempotent-migration` | 多步 DDL 迁移幂等守卫（Duplicate column / 半个迁移修复） |
+| `external-integration-doc` | 对外接口对接文档写作（契约交付物，禁止内部行话） |
+| `frontend-dashboard-layout-spec` | 看板类页面布局与信息架构（观察窗口 > 统计报表） |
+| `idempotent-migration` | 多步 DDL 迁移幂等守卫与大表锁窗 |
 | `maxscript-pitfalls` | 3ds Max MaxScript 坑点指南 |
 | `mysql-binlog-recovery` | MySQL binlog 前行镜像数据恢复流程 |
-| `mysql-expert` | MySQL 数据库设计/SQL 优化 |
+| `mysql-expert` | MySQL 表设计/索引/EXPLAIN/事务死锁/迁移规范 |
 | `one-way-sync-antipattern` | 单向同步反模式审查（设计 vs 实现偏差检测） |
 | `operate-through-channels` | 通过正确渠道修复：修代码不修数据 / 公开接口操作 / 端到端验证 |
 | `param-refactor-semantic-audit` | 参数统一改造逐点语义审查（防机械批量加参数回归） |
-| `playwright-cookie-injection-pitfalls` | Playwright add_cookies 持久化陷阱与修复 |
+| `playwright-cookie-injection-pitfalls` | Playwright cookie 注入持久化与浏览器会话排障 |
 | `plugin-creator` | 创建/脚手架 ZCode 插件 |
 | `production-config-sync` | 生产配置关联检查（改代码后检查 nginx/docker/CI 等关联配置是否需同步） |
 | `project-baseline` | 项目基线检查（10 项最低交付底线） |
 | `project-compliance-check` | 项目合规筛查（28 项生产前检查） |
 | `pyinstaller-packaging` | Python 项目打包 .exe |
-| `robust-architecture` | 分层架构/API 规范/目录结构 |
+| `robust-architecture` | 分层架构/API 规范/目录结构/响应模型兜底 |
 | `root-cause-no-patch` | 禁止临时补丁，必须定位根因 |
 | `schema-migration-convergence` | 数据库迁移收敛（支持 7 种技术栈） |
-| `silent-failure-audit` | 静默失败链路审计（兜底/回写/通知是否从未生效） |
-| `test-quality-principles` | 测试质量四条铁律 |
-| `vue2-elementui-standards` | Vue2 + ElementUI 响应式组件标准化 |
+| `silent-failure-audit` | 静默失败链路与展示层指标失真审计 |
+| `spec-alignment-review` | 实现与 spec/需求对齐审查（偏离/假设/范围蔓延） |
+| `taxonomy-normalization` | 分类字段批量归一化（label→code / 同义词 / 跨类组合） |
+| `test-quality-principles` | 测试质量铁律与验证证据真实性 |
+| `vue2-elementui-standards` | Vue2 + ElementUI 响应式组件与 CSS 令牌标准 |
 
 ## Hook 协议规范
 
@@ -113,7 +127,7 @@ wakita-plugins/
 - **提交信息**：中文内容 + 英文类型前缀（如 `feat:`、`fix:`、`chore:`）
 - **写操作留痕**：所有 Edit/Write/Bash 写操作自动记入 audit.log
 - **危险拦截规则**：见 `hooks/rules.py` 的 `DANGEROUS_COMMANDS` 和 `DEFAULT_PROTECTED_FILES`
-- **工作规范**：UserPromptSubmit 注入 6 条规范（中文提交/带行号证据/不臆测/危险拦截/复盘沉淀/分级动手）
+- **工作规范**：UserPromptSubmit 注入 9 条规范（中文提交/带行号证据/不臆测/危险拦截/复盘沉淀/分级动手/需求模糊先 brainstorm/同阶段复用子会话/大模块完成后 clean-home 结构审查）
 
 ## 版本更新规范（必须同时更新 4 处）
 

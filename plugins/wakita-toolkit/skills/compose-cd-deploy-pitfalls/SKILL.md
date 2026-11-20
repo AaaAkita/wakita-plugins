@@ -1,30 +1,25 @@
 ---
 name: compose-cd-deploy-pitfalls
 description: >
-  Docker Compose 生产 CD 部署的三类隐蔽陷阱与修复范式——迁移阻塞健康检查致误回滚、
-  纯 build 服务镜像 tag 漂移不重建容器（healthy≠deployed）、大表
-  FULLTEXT 迁移整表拷贝。当用户在 CI/CD（GitHub Actions 等）中用
-  docker compose 部署到服务器、部署"成功"但代码没更新、部署触发回滚、或容器
-  entrypoint 带数据库迁移时，必须参考本 skill。
+  Docker Compose 生产 CD 部署的三类隐蔽陷阱与修复范式——entrypoint 迁移阻塞健康检查致误回滚、
+  heredoc 管道脚本被 docker compose run 吃掉 stdin 导致假成功部署、FULLTEXT 大表 ADD COLUMN 整表拷贝。
+  当用户在 CI/CD（GitHub Actions 等）中用 docker compose 部署到服务器、部署"成功"但代码没更新、
+  部署触发回滚、或容器 entrypoint 带数据库迁移时，必须参考本 skill。
+  通用部署验证与回滚诊断见 `cd-deploy-verification`，大表锁窗通用规则见 `idempotent-migration`。
 ---
 
 # Docker Compose CD 部署陷阱（生产实战三连事故沉淀）
 
 来源：2026-09-07 某舆情平台三期部署，同一轮暴露三层问题，每一层都"看起来成功"。
 
-## 铁律：healthy ≠ deployed
+## 与其他部署 skill 的边界
 
-带自动回滚的流水线里，"服务 healthy"只证明**某个版本**活着。部署失败→回滚→服务照样 healthy。
-部署验证必须核对**版本指纹**，至少取二：
+- 通用的「healthy ≠ deployed」版本指纹核对、回滚后诊断、凭据轮换 → `cd-deploy-verification`
+- 大表锁窗的通用规则（FULLTEXT、迁移耗时、低峰窗口）→ `idempotent-migration`
+- 本 skill 只保留 compose 特有的三类陷阱：迁移阻塞健康检查、heredoc 吃 stdin、FULLTEXT 大表迁移
 
-```bash
-ssh user@server 'docker inspect <容器> --format "image={{.Image}} started={{.State.StartedAt}}"'
-# started 必须是本次部署时间窗内；image ID 必须是本次构建产物
-ssh user@server 'docker exec <容器> ls /app/<新文件>'          # 代码特征抽查
-ssh user@server 'docker exec <db> mysql -e "SELECT * FROM alembic_version"'  # 迁移戳
-```
-
-workflow 全绿不算数——本事故中"成功"的 CD 跑了三遍，容器始终是旧镜像。
+部署验证的底线仍然成立：workflow 全绿和容器 healthy 都不等于新版本已上线，验证以服务器上的
+版本指纹（image ID / StartedAt / 新代码特征 / 迁移戳）为准，具体命令见 `cd-deploy-verification`。
 
 ## 陷阱 1：entrypoint 迁移阻塞启动 → 健康检查误判 → 误回滚
 
@@ -76,7 +71,8 @@ docker compose -f docker-compose.yml up -d --build
 ## 陷阱 3：带 FULLTEXT 索引的大表，ADD COLUMN 不可走 INSTANT
 
 **机理**：MySQL 8.0 下表带 FULLTEXT 索引时 `ADD COLUMN` 退化为整表 COPY
-（实测 22K 行/112MB ≈ 6 分钟/列，桌面机）。迁移逐列 `op.add_column` 写 N 列 = N 次整表拷贝。
+（示例环境实测：22K 行/112MB，单列约数分钟；生产窗口必须按实际表大小和 CPU 配额实测，不要套用此数）。
+迁移逐列 `op.add_column` 写 N 列 = N 次整表拷贝。
 
 **修复范式**：多列合并为**一条** ALTER，一次拷贝：
 
@@ -94,10 +90,11 @@ def upgrade() -> None:
 ## 部署失败的杂项经验
 
 - 服务器 git fetch 走 ssh://github.com 偶发 `Connection timed out`——先重跑，别慌着改流水线
-- 回滚会重建容器，失败容器的日志随之消失；要诊断失败版本用一次性诊断容器复现（不发布端口）
+- 回滚后失败容器日志消失时的诊断 → 见 `cd-deploy-verification` 的一次性诊断容器流程
 - 流水线日志可能被构建刷屏截断，看不到 `up -d` 输出不等于没执行——以服务器指纹为准
 
 ## 关联
 
-- 验证与回滚后诊断的完整流程见 skill `cd-deploy-verification`（healthy≠deployed 的指纹核对法、
-  一次性诊断容器操作法、凭据轮换顺序）
+- 通用部署验证与回滚后诊断：`cd-deploy-verification`（版本指纹核对法、一次性诊断容器、凭据轮换顺序）
+- 大表迁移锁窗：`idempotent-migration`
+- compose 文件的生产/开发默认语义：`docker-compose-prod-default`

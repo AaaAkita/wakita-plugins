@@ -1,6 +1,6 @@
 ---
 name: plugin-creator
-description: 为 ZCode 创建并脚手架生成插件目录，包含必需的 `.claude-plugin/plugin.json`、可选的插件文件夹/文件、有效的 manifest 默认值，以及默认的个人 marketplace 条目。当 ZCode 需要创建新个人插件、添加可选插件结构、生成或更新 marketplace 条目以控制插件排序与可用性元数据，或在开发期间用 CLI 驱动的 cachebuster 与重装流程更新现有本地插件时使用。
+description: 为 ZCode 创建并脚手架生成插件目录，包含必需的 `.claude-plugin/plugin.json`、可选的插件文件夹/文件、有效的 manifest 默认值，以及默认的个人 marketplace 条目。当 ZCode 需要创建新个人插件、添加可选插件结构、生成或更新 marketplace 条目以控制插件排序与可用性元数据，或在开发期间用 CLI 驱动的 cachebuster 与重装流程更新现有本地插件时使用。触发词：创建插件、脚手架插件、plugin.json、marketplace.json、cachebuster、重装插件、ZCode 插件。
 ---
 
 # Plugin Creator
@@ -85,3 +85,9 @@ python3 scripts/update_plugin_cachebuster.py <plugin-path>
 
 编辑 `SKILL.md` 后：`python3 ../skill-creator/scripts/quick_validate.py .`
 交回插件前：`python3 scripts/validate_plugin.py <plugin-path>`
+
+## 适用边界
+
+- 仅适用于 **ZCode 插件**（`.claude-plugin/plugin.json` + marketplace 协议）。
+- Claude Code 原生插件、Codex 插件、其他 agent 平台的 manifest 字段与发现路径不同，不直接套用。
+- 生成的默认 marketplace 路径面向本机个人使用；团队/仓库级 marketplace 需显式指定路径。

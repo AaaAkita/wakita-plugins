@@ -1,18 +1,19 @@
 ---
 name: playwright-cookie-injection-pitfalls
 description: >
-  Playwright/Chromium persistent_context 用 add_cookies 注入 cookie 时的持久化陷阱。
-  记录 add_cookies 不设 expires 导致 session cookie 无法持久化到 user_data_dir 的机制原理、
-  实验验证方法、修复范式，以及与 Chromium 单例锁的交互关系。
-  当用户在调试 cookie 注入浏览器、cookie 注入后关闭 context 再打开就丢失、
-  persistent_context add_cookies 后 cookies() 返回空、session cookie 不持久化、
-  user_data_dir 里 Cookies 文件没有注入的 cookie 时使用。
-  触发词：add_cookies、cookie 注入、persistent_context、expires -1、
-  session cookie 丢失、cookie 不持久化、user_data_dir Cookies、
-  Chromium SingletonLock、cookie 注入后消失。
+  Playwright/Chromium cookie 注入不持久化、session cookie 丢失、
+  persistent_context 读不到 cookie 的排障；也覆盖双 profile 目录、461/CAPTCHA 双语义、
+  进程组信号、networkidle 不收敛。
+when_to_use: >
+  add_cookies、cookie 注入、persistent_context、expires -1、session cookie 丢失、
+  cookie 不持久化、user_data_dir Cookies、Chromium SingletonLock、cookie 注入后消失、
+  461、验证码、profile 目录、networkidle 不收敛；cookie 注入后关闭 context 再打开就丢失。
 ---
 
 # Playwright Cookie 注入：add_cookies 的 expires 不持久化陷阱
+
+**适用边界**：Playwright / Patchright + Chromium。Selenium、Puppeteer 的 cookie/profile 机制不同；
+Firefox/WebKit 的持久化行为也不同，不直接套用。
 
 ## 现象
 
@@ -88,6 +89,35 @@ def parse_cookie_header_to_dicts(cookie_header: str, domain: str, expires_in_day
 - Chromium 的 `SingletonLock` 会让两个进程用同一 `user_data_dir` 启动 chromium 时
   第二个进程启动失败。所以**注入要在独占 `user_data_dir` 的窗口内进行**。
 - 注入完成后必须立即释放 chromium 进程，避免后续其他进程获取锁后启动 chromium 时冲突。
+
+## 浏览器会话与反风控补充
+
+### 1. 同一平台可能有两个浏览器配置目录
+
+登录/体检浏览器与爬虫子进程可能用**不同命名的 user_data_dir**（如平台全名 vs 短名）。
+判断「登录了但爬虫不认」时：
+
+- 先比较各目录 `Default/Cookies` 的写入时间，确认哪个角色在写
+- 再看凭据池是否被登录流程更新（登录成功 ≠ 爬虫 profile 同步）
+- 不要轻易把两个目录合并：登录流程开头可能 `rmtree` 目录，会删掉在役登录态
+
+### 2. 461 / CAPTCHA 不一定真的是验证码
+
+同一状态码可能同时覆盖「验证码挑战」和「登录态过期」，客户端日志的标签不可全信。
+先看实际页面：显示登录页 = 登录过期（重新登录即可）；显示滑块/验证码 = 才需要人工过验证。
+`pong` 接口返回已登录，也不代表搜索/详情接口认同一会话。
+
+### 3. 进程组信号可能先杀掉 driver
+
+Playwright/patchright 的浏览器可能以 detached 方式自立进程组，而 node driver 留在爬虫组内。
+对整组发 SIGTERM，打中的是 driver，driver 收到即关闭浏览器，导致「退出前落盘」静默失败。
+正确做法：优雅阶段只对 Python 进程 `SIGTERM`，让它自己收尾；随后再对整组补 `SIGKILL` 清场。
+
+### 4. networkidle 在长轮询站点永不收敛
+
+SPA + 长连接/心跳站点的 `waitUntil: 'networkidle'` 会超时。改用
+`domcontentloaded` + 明确的元素/文本 `waitForFunction` 或固定等待。
+SSE 端点用 curl 验证会挂住，必须加 `--max-time`。
 
 ## 与其他 skill 的衔接
 

@@ -5,6 +5,10 @@ description: 提供 Docker 构建缓存复用、部署规范审查、多环境�
 
 # Docker 专家技能 (Docker Expert Skill)
 
+> **分工边界**：本 skill 管构建缓存、镜像优化、构建诊断与镜像源；compose 文件的生产/开发默认语义
+> （override 反模式、dev/prod 文件拆分、源码挂载归属）见 `docker-compose-prod-default`，
+> CD 部署验证与回滚诊断见 `cd-deploy-verification`。
+
 ## 一、构建缓存机制（核心：让构建从"分钟级"降到"秒级"）
 
 Docker 构建有**双层缓存**：
@@ -47,6 +51,8 @@ Docker 构建有**双层缓存**：
 | 适用 | **开发环境** | **生产环境** |
 
 关键细节：开发模式 compose 挂载 `./src:/app` 后，运行时用的是挂载进来的代码，不是镜像里 COPY 的代码。开发环境速查：开发用官方/已构建镜像 + Bind Mount（热重载），生产用完整构建镜像（代码烤进去）+ Named Volume，CI/测试用完整构建镜像（复现生产、无状态）。
+
+文件层面的 dev/prod 拆分规范（override.yml 反模式、`docker-compose.dev.yml` 显式加载）见 `docker-compose-prod-default`。
 
 ### 前端 dev 模式改造（高频场景）
 
@@ -193,7 +199,7 @@ $env:COMPOSE_HTTP_TIMEOUT="150"
 4. **合理设置超时**：大型镜像超时设置为预估时间的 2 倍
 5. **定期测试**：网络环境变化时重新测试镜像源
 
-## 六、交互准则
+## 七、交互准则
 
 - **简洁明了**：给具体代码片段，少讲冗长理论
 - **主动规避风险**：发现 Dockerfile 里 `COPY` 大压缩包、缺 `.dockerignore`、缺 cache mount，主动提出优化

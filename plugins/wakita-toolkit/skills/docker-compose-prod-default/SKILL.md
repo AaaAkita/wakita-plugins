@@ -1,19 +1,18 @@
 ---
 name: docker-compose-prod-default
 description: >
-  Docker Compose 生产/开发默认语义设计规范与审查。
-  核心原则：docker compose build/up 默认产出生产版，开发版通过显式 -f docker-compose.dev.yml 加载；
-  生产 compose 零源码挂载；永不使用 docker-compose.override.yml 约定文件名做开发。
-  当用户设计 Docker 部署方案、初始化 docker-compose、review 项目的 docker 配置、
-  遇到「build 默认出开发版」「生产环境误挂载源码」「override 文件自动加载导致行为反直觉」、
-  或要把现有项目的 dev/prod compose 拆分时使用。
-  触发词：docker-compose override、compose 生产版、compose 开发版、override.yml、
-  build 默认出开发版、生产环境挂载源码、dev/prod 拆分、源码挂载到容器、
-  ./src:/app、镜像不可变原则、Dockerfile.dev、compose 部署方案设计、
-  compose 文件审查。
+  Docker Compose 生产/开发默认语义设计与审查：build/up 默认产出生产版，
+  开发版用显式 -f docker-compose.dev.yml；生产 compose 零源码挂载，不用 override.yml 做开发。
+when_to_use: >
+  docker-compose override、compose 生产版、compose 开发版、override.yml、build 默认出开发版、
+  生产环境挂载源码、dev/prod 拆分、源码挂载到容器、./src:/app、镜像不可变原则、
+  Dockerfile.dev、compose 部署方案设计、compose 文件审查。
 ---
 
 # Docker Compose 生产/开发默认语义设计规范
+
+> **分工边界**：本 skill 只管 compose 文件的语义与结构（生产默认、dev 显式叠加、挂载归属）；
+> 构建缓存、镜像优化、构建诊断见 `docker-expert`，CD 部署验证与回滚诊断见 `cd-deploy-verification`。
 
 ## 问题背景
 

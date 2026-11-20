@@ -1,10 +1,12 @@
 ---
 name: vue2-elementui-standards
-description: |
-  Vue2 + ElementUI 响应式组件标准化规范。涵盖响应式断点系统、线性缩放、CSS Grid 布局、
-  卡片组件标准化（7 类卡片规格速查表）及 ElementUI 使用约定。
-  触发词：Vue2、ElementUI、el-row、el-col、el-card、响应式卡片、卡片布局、卡片组件、
-  Grid 布局、断点、breakpoint、自适应缩放、线性缩放、1280、1440、1600、1920、2560。
+description: >
+  Vue2 + ElementUI 响应式组件与 CSS 令牌规范：断点/线性缩放、Grid 布局、
+  七类卡片规格、令牌三层结构、语义视觉单一来源。
+when_to_use: >
+  Vue2、ElementUI、el-row、el-col、el-card、响应式卡片、卡片布局、卡片组件、Grid 布局、
+  断点、breakpoint、自适应缩放、线性缩放、1280、1440、1600、1920、2560、CSS 令牌、
+  design token、语义色、颜色硬编码、主题切换、Canvas 颜色。
 ---
 
 # Vue2 + ElementUI 响应式组件标准化规范
@@ -241,6 +243,39 @@ padding: clamp(12px, calc(16px * var(--scale)), 24px);
 
 ---
 
+## 6. CSS 设计令牌与语义视觉统一
+
+### 6.1 令牌三层结构
+
+前端铺开后再改颜色，最怕色值散落。统一放一个 `tokens.css`，分三层：
+
+1. **基础色阶**：`--brand-*` / `--accent-*` / `--ink-*`，只做调色板
+2. **语义色**：`--success` / `--warning` / `--danger` / `--info`
+3. **组件令牌**：如 `--viewer-bg` / `--viewer-paper` / `--viewer-paper-edge`
+
+规则：
+
+- 组件样式一律 `var(--token, fallback)`，禁止散落十六进制色值
+- Canvas 2D / Three.js 通过 `cssToken(name, fallback)` 读同一令牌，JS 侧只读不写
+- 调色只改令牌，不逐个组件改
+- 令牌变更后检查不走 CSS 的渲染层（Canvas/WebGL）
+
+### 6.2 语义视觉只有一个来源
+
+同一种业务语义（切割/折痕/半切/齿线/忽略，或成功/警告/危险）在映射表、摘要、
+列表、Canvas 预览中必须使用**同一颜色 + 同一线型**。
+
+- 建一个 `kindStyles.ts`（或等价模块）作为唯一映射：color + dash + 中文名
+- 映射表行、摘要 chip、Canvas 全部引用它；不要在各自组件里重复定义
+- DXF 等原始图层色只在「上传预览」显示，并注明「原始图层色」，不混入语义色
+- 中文语义名只保留一套，不混用同义词
+
+## 审查判据（被 clean-home 的结构步骤加载时）
+
+- 颜色、尺寸、字号、间距直接写死在组件里，未走 CSS 令牌 → E1 硬编码 P1。
+- 同一业务语义在映射表、摘要、列表、Canvas 中颜色/线型不一致 → 单一来源违反 P1。
+- 断点写死单一分辨率、卡片用固定高度/固定列数 → 响应式规范违反 P1。
+
 ## 检查清单
 
 - [ ] 确认了目标断点范围（1280/1440/1600/1920/2560）
@@ -249,3 +284,9 @@ padding: clamp(12px, calc(16px * var(--scale)), 24px);
 - [ ] 图片容器用 `padding-top` 保持比例，不用固定 height
 - [ ] 文字溢出用 `text-ellipsis` 或 `-webkit-line-clamp` 截断
 - [ ] 各断点下测试过卡片列数和视觉效果
+
+## 适用边界
+
+- 仅适用于 **Vue 2 + ElementUI**。Vue 3 + Element Plus、React、其他 UI 库的 API 与断点实现不同，不直接套用。
+- 本 skill 覆盖响应式布局、卡片规格与 CSS 令牌，不覆盖业务状态管理、路由、权限等应用架构。
+- 令牌方案可迁移到其他框架，但 `el-*` 组件约定与 Vue2 单文件组件语法不可直接迁移。

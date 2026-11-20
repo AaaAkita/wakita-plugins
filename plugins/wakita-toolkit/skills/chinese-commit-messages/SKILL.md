@@ -5,6 +5,7 @@ description: |
   必须使用这个 skill。强制要求：所有 commit message 必须用中文撰写；内容要清晰、按模块分点；
   除非用户明确说"用英文"或"写英文 commit"，否则不准在 commit message 中使用英文。
   如果用户只是随口说"提交吧"、"commit 一下"，同样适用此规则。
+  触发词：git commit、提交代码、commit message、写 commit、提交信息、中文提交。
 ---
 
 # 中文 Commit Message 规范
@@ -45,3 +46,9 @@ description: |
 ## 示例参考
 
 完整示例见 `references/examples.md`。
+
+## 适用边界
+
+- 只管 **commit message**。代码标识符、变量名、API 名保持英文，不因本 skill 中文化。
+- 用户明确要求英文 commit 时，以用户指令为准。
+- PR 描述、issue、发布说明可参考同样的「中文正文 + 英文类型前缀」风格，但不属于本 skill 的强制范围。

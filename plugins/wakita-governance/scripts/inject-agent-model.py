@@ -2,10 +2,10 @@
 #
 # inject-agent-model.py
 #
-# Generate / update the three wakita-governance subagent files
-# (wakita-scout.md, wakita-builder.md, wakita-auditor.md) in the USER-LEVEL
-# ZCode subagent directory ~/.zcode/agents/, from the templates shipped in
-# this plugin under templates/agents/.
+# Generate / update the four wakita-governance subagent files
+# (wakita-scout.md, wakita-builder.md, wakita-auditor.md, wakita-ace.md)
+# in the USER-LEVEL ZCode subagent directory ~/.zcode/agents/, from the
+# templates shipped in this plugin under templates/agents/.
 #
 # Since v2.4.0 the plugin no longer ships agents under agents/ (which ZCode
 # auto-registers as plugin agents). Instead, this script materializes them as
@@ -20,8 +20,8 @@
 #   - model-id: a model key nested under the chosen provider in config.json.
 #
 # Defaults to DeepSeek deepseek-v4-flash (matches the shipped scout/builder
-# templates; the auditor template ships with deepseek-v4-pro, so a bare
-# --apply switches it to flash too — all three agents get ONE unified model):
+# templates; the auditor/ace templates ship with deepseek-v4-pro, so a bare
+# --apply switches them to flash too — all four agents get ONE unified model):
 #   provider = 466f2f41-bacb-4168-b493-d0afa32a0357
 #   modelid  = deepseek-v4-flash
 #
@@ -53,7 +53,7 @@ from pathlib import Path
 CONFIG_PATH = Path.home() / ".zcode" / "v2" / "config.json"
 USER_AGENTS_DIR = Path.home() / ".zcode" / "agents"
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates" / "agents"
-AGENT_FILES = ["wakita-scout.md", "wakita-builder.md", "wakita-auditor.md"]
+AGENT_FILES = ["wakita-scout.md", "wakita-builder.md", "wakita-auditor.md", "wakita-ace.md"]
 
 # defaults: DeepSeek deepseek-v4-flash (matches shipped templates)
 DEFAULT_PROVIDER = "466f2f41-bacb-4168-b493-d0afa32a0357"
@@ -379,7 +379,7 @@ def main() -> int:
         err("The plugin installation looks broken (missing templates/agents/). Reinstall wakita-governance.")
         return 1
 
-    # ----------------------------- render all three agents -----------------------------
+    # ----------------------------- render all four agents -----------------------------
     rendered: dict[str, bytes] = {}
     for af in AGENT_FILES:
         tpl = TEMPLATES_DIR / af

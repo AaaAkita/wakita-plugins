@@ -2,9 +2,9 @@
 #
 # inject-codex-agents.py
 #
-# Install the three wakita-governance roles (scout / builder / auditor) as
-# Codex-native custom agents, plus the three Codex custom-prompt equivalents
-# of the ZCode slash commands (/subagent-create, /audit, /lock).
+# Install the four wakita-governance roles (scout / builder / auditor / ace)
+# as Codex-native custom agents, plus the three Codex custom-prompt
+# equivalents of the ZCode slash commands (/subagent-create, /audit, /lock).
 #
 # Why this script exists:
 #   ZCode defines user-level subagents as Markdown files under ~/.zcode/agents/
@@ -72,7 +72,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 AGENT_TEMPLATES_DIR = SCRIPT_DIR.parent / "templates" / "codex-agents"
 PROMPT_TEMPLATES_DIR = SCRIPT_DIR.parent / "templates" / "codex-prompts"
 
-AGENT_FILES = ["wakita-scout.toml", "wakita-builder.toml", "wakita-auditor.toml"]
+AGENT_FILES = ["wakita-scout.toml", "wakita-builder.toml", "wakita-auditor.toml", "wakita-ace.toml"]
 PROMPT_FILES = [
     "wakita-subagent-create.md",
     "wakita-audit.md",
@@ -201,8 +201,8 @@ def write_file(target_path: Path, content: bytes) -> str:
 def build_plan(args, config_defaults: dict, model_slugs) -> tuple[dict, list, list]:
     """Render all agents/prompts. Returns (meta, agent_plans, prompt_plans)."""
     # Explicit CLI overrides win; otherwise keep each template's per-agent
-    # values (scout/builder: flash+high, auditor: pro+max). config.toml values
-    # are only reported for display and never clobber template defaults.
+    # values (scout/builder: flash+high, auditor/ace: pro+max). config.toml
+    # values are only reported for display and never clobber template defaults.
     model = args.model
     reasoning = args.reasoning
 
@@ -297,11 +297,11 @@ def main() -> int:
         "and the ZCode command equivalents as Codex prompts (~/.codex/prompts/).",
     )
     parser.add_argument("--model", default=None,
-                        help="Model for all three agents (default: template value or ~/.codex/config.toml)")
+                        help="Model for all four agents (default: template value or ~/.codex/config.toml)")
     parser.add_argument("--reasoning", dest="reasoning", default=None,
-                        help="model_reasoning_effort for all three agents (e.g. high/max; default: template/config)")
+                        help="model_reasoning_effort for all four agents (e.g. high/max; default: template/config)")
     parser.add_argument("--sandbox", default=None,
-                        help="sandbox_mode for all three agents (read-only/workspace-write/danger-full-access)")
+                        help="sandbox_mode for all four agents (read-only/workspace-write/danger-full-access)")
     parser.add_argument("--no-prompts", action="store_true",
                         help="Skip installing the Codex custom prompts (~/.codex/prompts/)")
     parser.add_argument("--json", action="store_true",
@@ -404,8 +404,8 @@ def main() -> int:
         "skipped_files": skipped,
         "restart_hint": (
             "新会话（或重启 Codex App / CLI）后可用 @wakita-scout / @wakita-builder / "
-            "@wakita-auditor 调遣；CLI 中提示词以 /wakita-subagent-create、/wakita-audit、"
-            "/wakita-lock 出现。"
+            "@wakita-auditor / @wakita-ace 调遣；CLI 中提示词以 /wakita-subagent-create、"
+            "/wakita-audit、/wakita-lock 出现。"
         ),
     }, ensure_ascii=False, indent=2))
     return 0

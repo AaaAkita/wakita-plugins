@@ -1,4 +1,4 @@
-# Codex 子智能体方案（v2.6.0）
+# Codex 子智能体方案（v2.7.0）
 
 ## 结论摘要
 
@@ -11,7 +11,7 @@ wakita 的 `/subagent-create`、`/audit`、`/lock` 在 Codex 下**不能直接�
 | 安装方式 | `/subagent-create` 或 `inject-agent-model.py` | `inject-codex-agents.py --apply` |
 | hooks | `hooks/hooks.json`（PreToolUse/PostToolUse/UserPromptSubmit） | 同一份 `hooks.json`，Codex 加载并信任后即生效（本机已验证） |
 
-角色正文（探索/实现/审查规范、结果回传协议）与 ZCode 版保持同一事实源，只改传输层。
+角色正文（探索/实现/审查/攻坚规范、结果回传协议）与 ZCode 版保持同一事实源，只改传输层。
 
 ## 一、诊断：为什么命令无法使用
 
@@ -44,11 +44,12 @@ ZCode 用户级 subagent 是 `~/.zcode/agents/*.md`，frontmatter 含 `model:`�
 ```
 plugins/wakita-governance/
 ├── templates/
-│   ├── agents/                # ZCode 版（.md，保持不变）
-│   ├── codex-agents/          # 新增：Codex 版（.toml × 3）
+│   ├── agents/                # ZCode 版（.md × 4）
+│   ├── codex-agents/          # 新增：Codex 版（.toml × 4）
 │   │   ├── wakita-scout.toml      # 只读探索，sandbox_mode = read-only
 │   │   ├── wakita-builder.toml    # 实现 + 自验证，workspace-write
-│   │   └── wakita-auditor.toml    # 代码审查，read-only，reasoning = max
+│   │   ├── wakita-auditor.toml    # 代码审查，read-only，reasoning = max
+│   │   └── wakita-ace.toml        # 高难度攻坚，read-only，reasoning = max
 │   └── codex-prompts/         # 新增：Codex 命令等价物（.md × 3）
 │       ├── wakita-subagent-create.md
 │       ├── wakita-audit.md
@@ -60,9 +61,9 @@ plugins/wakita-governance/
 
 设计要点：
 
-- **Codex 原生字段**：`name`/`description`/`developer_instructions` 必填；`model`、`model_reasoning_effort`、`sandbox_mode`、`nickname_candidates` 可选。scout/auditor 直接声明 `sandbox_mode = "read-only"`，从沙箱层保证只读，比 ZCode 的工具白名单更强。
+- **Codex 原生字段**：`name`/`description`/`developer_instructions` 必填；`model`、`model_reasoning_effort`、`sandbox_mode`、`nickname_candidates` 可选。scout/auditor/ace 直接声明 `sandbox_mode = "read-only"`，从沙箱层保证只读，比 ZCode 的工具白名单更强。
 - **不碰 `~/.codex/config.toml`**：standalone TOML agent 自动发现，无需注册。
-- **模型默认**：scout/builder `deepseek-v4-flash` + `high`，auditor `deepseek-v4-pro` + `max`（与 ZCode 模板的 flash/pro + thoughtLevel 对应）。模型不符本机 catalog 时脚本会报错并列出可用模型。
+- **模型默认**：scout/builder `deepseek-v4-flash` + `high`，auditor/ace `deepseek-v4-pro` + `max`（与 ZCode 模板的 flash/pro + thoughtLevel 对应）。模型不符本机 catalog 时脚本会报错并列出可用模型。
 
 ## 三、安装与使用
 
@@ -83,7 +84,7 @@ python plugins/wakita-governance/scripts/inject-codex-agents.py --apply
 
 | 参数 | 说明 |
 |------|------|
-| `--model <slug>` | 三个 agent 统一换模型（如 `deepseek-v4-pro`） |
+| `--model <slug>` | 四个 agent 统一换模型（如 `deepseek-v4-pro`） |
 | `--reasoning <档位>` | 换 `model_reasoning_effort`（如 `max`） |
 | `--sandbox <模式>` | 统一换沙箱（`read-only`/`workspace-write`/`danger-full-access`） |
 | `--no-prompts` | 只装 agent，不装命令提示词 |
@@ -92,13 +93,13 @@ python plugins/wakita-governance/scripts/inject-codex-agents.py --apply
 
 新开会话（或重启 Codex App / 重开 CLI）后：
 
-- 对话中直接调遣：`@wakita-scout`、`@wakita-builder`、`@wakita-auditor`；
+- 对话中直接调遣：`@wakita-scout`、`@wakita-builder`、`@wakita-auditor`、`@wakita-ace`；
 - Codex CLI / IDE 扩展中提示词显示为 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock`；⚠️ 官方已标记自定义提示词 deprecated，桌面 App 不显示，App 里直接让主智能体执行脚本或调遣 `@wakita-*`；
 - 主智能体也可用 spawn/multi-agent 工具按同样角色提示派发（`using-wakita` skill 的「Codex 环境」章节有说明）。
 
 ### 3. 结果回传协议
 
-三个 TOML agent 的 `developer_instructions` 均含 `<result_protocol>`：末尾必须附 `状态`（success/partial/failed）、`摘要`、`位置`、`阻塞项`、`根因`、`下一步建议`。主智能体按状态推进，`partial` 不得当 `success`。
+四个 TOML agent 的 `developer_instructions` 均含 `<result_protocol>`：末尾必须附 `状态`（success/partial/failed）、`摘要`、`位置`、`阻塞项`、`根因`、`下一步建议`。主智能体按状态推进，`partial` 不得当 `success`。
 
 ## 四、hooks 现状（2026-08-17 实测）
 

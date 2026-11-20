@@ -1,12 +1,12 @@
 {
   "name": "wakita-toolkit",
-  "version": "1.7.0",
-  "description": "开发工具包：领域 skill 集合（数据库、Docker、测试、代码复用、前端规范等），可按需独立开关。与 wakita-governance 互补，不依赖。",
+  "version": "1.9.0",
+  "description": "开发工具包：38 个领域 skill 集合（数据库、Docker、测试、代码复用、前端规范、展示层规范化、对接文档、Canvas 交互、分类归一化、中文技术表达、清理房间结构审查等），可按需独立开关。与 wakita-governance 互补，不依赖。",
   "skills": "./skills/",
   "author": "AaaAkita",
   "homepage": "https://github.com/AaaAkita/wakita-plugins",
   "interface": {
     "displayName": "Wakita Toolkit",
-    "shortDescription": "29 个领域 skill（MySQL / Docker / 测试 / 前端 / 架构 / 运维…）"
+    "shortDescription": "38 个领域 skill（MySQL / Docker / 测试 / 前端 / 架构 / 运维 / 清理房间审查…）"
   }
 }

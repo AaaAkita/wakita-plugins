@@ -10,6 +10,8 @@ description: >
 
 适用前提：`binlog_format=ROW` 且 `log_bin=ON`（MySQL 8 默认开启）。恢复的是**被覆盖前的行内容**（前行镜像），不是回滚事务。
 
+**适用边界**：本流程针对 MySQL ROW 格式 binlog。PostgreSQL WAL、MongoDB oplog、SQL Server 事务日志的解析工具与语义不同，不适用本 playbook。
+
 ## 第 0 步：先冻结现场，再动手
 
 - 确认被覆盖的**表、行、时间窗**（问用户或查应用日志/审计）。时间窗越窄，解析越快。
@@ -20,13 +22,16 @@ description: >
 
 每日定时备份里的旧值如果满足需求，直接用，不必碰 binlog。
 
-本项目（YSYweb）备份在 `yuqing_backup` 容器 `/backups/YYYYMMDD_HHMMSS/mysql_all.sql.gz`（每日 01:29）：
+先确认本项目的备份位置（不同项目不同，常见于独立备份容器或宿主机目录）：
 
 ```bash
-docker exec yuqing_backup ls -lt /backups/
-docker cp yuqing_backup:/backups/<dir> /tmp/yq_backup
-zcat /tmp/yq_backup/mysql_all.sql.gz | grep -A5 "INSERT INTO \`<表名>\`"
+# 示例：备份在独立容器的 /backups/YYYYMMDD_HHMMSS/ 下
+docker exec <备份容器> ls -lt /backups/
+docker cp <备份容器>:/backups/<dir> /tmp/db_backup
+zcat /tmp/db_backup/mysql_all.sql.gz | grep -A5 "INSERT INTO \`<表名>\`"
 ```
+
+把 `<备份容器>`、`/backups/` 换成项目实际值；先查 compose/部署文档确认，不要猜。
 
 备份不含目标版本（覆盖发生在备份之后）→ 走 binlog。
 
@@ -63,7 +68,7 @@ from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import UpdateRowsEvent, DeleteRowsEvent
 
 stream = BinLogStreamReader(
-    connection_settings={"host": "127.0.0.1", "port": 6212, "user": "<用户>", "passwd": "<密码>"},
+    connection_settings={"host": "127.0.0.1", "port": 3306, "user": "<用户>", "passwd": "<密码>"},  # 端口按项目实际改
     server_id=9999,                      # 必填，否则 TypeError
     log_file="/tmp/binlog.target",
     log_pos=4,
@@ -85,7 +90,7 @@ for ev in stream:
 
 ## 第 4 步：恢复写回——走业务渠道，不直接改库
 
-若该表有管理后台/公开 API（如本项目 prompt_fixed_blocks 有 PUT 端点），用 API 写回：触发正常的校验、缓存失效、审计日志。仅当无业务通道（纯数据表）时才直接 SQL 写回，并向用户说明绕过了业务层。
+若该表有管理后台/公开 API（如配置表有管理端 PUT 端点），用 API 写回：触发正常的校验、缓存失效、审计日志。仅当无业务通道（纯数据表）时才直接 SQL 写回，并向用户说明绕过了业务层。
 
 ## 第 5 步：验证与清理（缺一不可）
 

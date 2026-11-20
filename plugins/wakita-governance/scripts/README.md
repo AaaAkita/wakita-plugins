@@ -1,15 +1,15 @@
 # wakita-governance 子智能体生成/模型注入脚本
 
-wakita-governance 的三个子智能体（scout / auditor / builder）自 v2.4.0 起不再随插件分发（插件下无 `agents/` 目录），改为由本脚本把插件内置模板（`templates/agents/wakita-*.md`）渲染后写入**用户级 subagent 目录** `~/.zcode/agents/`，frontmatter 注入 `model:` 与 `thoughtLevel:`。
+wakita-governance 的四个子智能体（scout / auditor / builder / ace）自 v2.4.0 起不再随插件分发（插件下无 `agents/` 目录），改为由本脚本把插件内置模板（`templates/agents/wakita-*.md`）渲染后写入**用户级 subagent 目录** `~/.zcode/agents/`，frontmatter 注入 `model:` 与 `thoughtLevel:`。
 
-- 首次运行 = 初始化生成三个子智能体
+- 首次运行 = 初始化生成四个子智能体
 - 后续运行 = 切换 model / thoughtLevel（覆盖写，写前备份 `.bak`）
 
 ZCode 不在 agent frontmatter 中展开环境变量，因此切换 provider/model 需通过本脚本（或 `/subagent-create` 命令）注入真实值。
 
 ## 脚本作用
 
-读取 `templates/agents/wakita-{scout,builder,auditor}.md` 三个模板，替换 frontmatter 的 `model:` 为 `custom:<provider>:<model-id>` 真实值（可选覆盖 `thoughtLevel:`），写入 `~/.zcode/agents/` 同名文件。
+读取 `templates/agents/wakita-{scout,builder,auditor,ace}.md` 四个模板，替换 frontmatter 的 `model:` 为 `custom:<provider>:<model-id>` 真实值（可选覆盖 `thoughtLevel:`），写入 `~/.zcode/agents/` 同名文件。
 
 - 模板按脚本自身相对路径定位（`../templates/agents/`），仓库态与插件安装态结构一致，无需指定版本目录
 - 写前备份已存在的目标文件为 `.bak`
@@ -84,7 +84,7 @@ Move-Item ~\.zcode\agents\wakita-scout.md.bak ~\.zcode\agents\wakita-scout.md -F
 
 ## 生效方式
 
-ZCode 当前不支持热重载已加载的 agent。写入后需**关闭并重开会话**（或重启 ZCode 客户端），新会话的 Agent 工具列表才会出现/更新这三个子智能体。
+ZCode 当前不支持热重载已加载的 agent。写入后需**关闭并重开会话**（或重启 ZCode 客户端），新会话的 Agent 工具列表才会出现/更新这四个子智能体。
 
 ## 跨平台说明
 
@@ -94,14 +94,14 @@ ZCode 当前不支持热重载已加载的 agent。写入后需**关闭并重开
 
 # Codex 子智能体注入脚本（inject-codex-agents.py）
 
-Codex 不识别 ZCode 的 `~/.zcode/agents/*.md` 与 `commands/*.md`（协议差异详见 `docs/codex-子智能体方案.md`）。本脚本把同一套 scout/builder/auditor 角色渲染为 **Codex 原生 TOML agent**（`~/.codex/agents/`），并把三个 ZCode 斜杠命令替换为 **Codex 自定义提示词**（`~/.codex/prompts/`）。
+Codex 不识别 ZCode 的 `~/.zcode/agents/*.md` 与 `commands/*.md`（协议差异详见 `docs/codex-子智能体方案.md`）。本脚本把同一套 scout/builder/auditor/ace 角色渲染为 **Codex 原生 TOML agent**（`~/.codex/agents/`），并把三个 ZCode 斜杠命令替换为 **Codex 自定义提示词**（`~/.codex/prompts/`）。
 
 > 注意：自定义提示词官方已标记 deprecated，且仅在 Codex CLI / IDE 扩展中显示；桌面 App 不显示 `/wakita-*`，请直接调遣 `@wakita-*` agent 或让主智能体执行对应脚本。
 
 ## 用法
 
 ```bash
-# 查看生效配置（各 agent 取模板默认：scout/builder flash+high，auditor pro+max；~/.codex/config.toml 值仅展示）
+# 查看生效配置（各 agent 取模板默认：scout/builder flash+high，auditor/ace pro+max；~/.codex/config.toml 值仅展示）
 python scripts/inject-codex-agents.py --json
 
 # 人类可读的计划（不落盘）
@@ -110,10 +110,10 @@ python scripts/inject-codex-agents.py --list
 # dry-run（不落盘）
 python scripts/inject-codex-agents.py
 
-# 实际写入 ~/.codex/agents/（3 个 TOML）与 ~/.codex/prompts/（3 个提示词）
+# 实际写入 ~/.codex/agents/（4 个 TOML）与 ~/.codex/prompts/（3 个提示词）
 python scripts/inject-codex-agents.py --apply
 
-# 三个 agent 统一换模型 / 推理强度 / 沙箱
+# 四个 agent 统一换模型 / 推理强度 / 沙箱
 python scripts/inject-codex-agents.py --model deepseek-v4-pro --apply
 python scripts/inject-codex-agents.py --reasoning max --apply
 python scripts/inject-codex-agents.py --sandbox read-only --apply
@@ -135,7 +135,7 @@ python scripts/inject-codex-agents.py --no-prompts --apply
 
 | 参数 | 说明 |
 |------|------|
-| `--model <slug>` | 三个 agent 统一模型（缺省保留模板每角色默认） |
+| `--model <slug>` | 四个 agent 统一模型（缺省保留模板每角色默认） |
 | `--reasoning <档位>` | `model_reasoning_effort`（如 `high`/`max`） |
 | `--sandbox <模式>` | 统一沙箱：`read-only` / `workspace-write` / `danger-full-access` |
 | `--no-prompts` | 跳过提示词安装 |
@@ -150,4 +150,4 @@ python scripts/inject-codex-agents.py --no-prompts --apply
 
 ## 生效方式
 
-新开会话（或重启 Codex App / CLI）后可用 `@wakita-scout`、`@wakita-builder`、`@wakita-auditor` 调遣；CLI 中提示词显示为 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock`。
+新开会话（或重启 Codex App / CLI）后可用 `@wakita-scout`、`@wakita-builder`、`@wakita-auditor`、`@wakita-ace` 调遣；CLI 中提示词显示为 `/wakita-subagent-create`、`/wakita-audit`、`/wakita-lock`。

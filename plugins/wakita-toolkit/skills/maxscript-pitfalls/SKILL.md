@@ -5,6 +5,7 @@ description: |
   本 skill 记录了 MaxScript 开发过程中踩过的坑和解决方案，
   涉及语法陷阱、API 差异、文件路径处理、材质贴图遍历等关键知识点。
   适用于所有 3ds Max MaxScript 脚本的编写、调试与维护。
+  触发词：MaxScript、3ds Max、maxscript、VRayMtl、材质遍历、贴图遍历、maxFilePath、maxFileName、3dsmaxbatch、.ms 脚本。
 ---
 
 # MaxScript 踩坑记录
@@ -75,3 +76,9 @@ description: |
 ## 参考示例库
 
 完整的语法陷阱、文件路径、材质遍历、属性访问等分类代码示例与报错信息见 `references/pitfalls.md`。
+
+## 适用边界
+
+- 仅适用于 **3ds Max MaxScript**。Python（pymxs）、C++ SDK、其他 DCC 工具的脚本 API 不适用。
+- 材质/属性相关条目以 V-Ray 为主；Corona、Arnold 等渲染器的属性集不同，访问前仍要 `try-catch` + 判空。
+- 版本差异：不同 3ds Max 版本的 .NET 接口和属性集合可能不同，结论需在目标版本验证。

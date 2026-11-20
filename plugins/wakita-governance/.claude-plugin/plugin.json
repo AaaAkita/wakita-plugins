@@ -1,7 +1,7 @@
 {
   "name": "wakita-governance",
-  "version": "2.6.0",
-  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder，统一结果回传协议，由 /subagent-create 生成用户级 agent 并支持 thoughtLevel）+ audit/lock/subagent-create 命令。配套 inject-agent-model.py 生成/切换 ZCode 用户级子智能体；inject-codex-agents.py 支持 Codex（~/.codex/agents/*.toml + ~/.codex/prompts/ 命令提示词）。v2.6.0 hook 脚本统一 wakita- 前缀、消息带 [wakita] 标识，与 mimosa 安全扫描区分。领域 skill 已拆分至 wakita-toolkit 插件。",
+  "version": "2.8.0",
+  "description": "管控核心：PreToolUse 危险命令拦截、PostToolUse 审计留痕、UserPromptSubmit 工作规范注入、子智能体调度（scout/auditor/builder/ace，统一结果回传协议，由 /subagent-create 生成用户级 agent 并支持 thoughtLevel）+ audit/lock/subagent-create 命令。配套 inject-agent-model.py 生成/切换 ZCode 用户级子智能体；inject-codex-agents.py 支持 Codex（~/.codex/agents/*.toml + ~/.codex/prompts/ 命令提示词）。v2.8.0 UserPromptSubmit 注入 clean-home 结构审查规范与触发词提示（大模块写完后提醒走结构审查；clean-home 索引 skill 位于 wakita-toolkit）。v2.7.0 新增 wakita-ace 攻坚子智能体（常规手段失效或严重 Bug 多次复现时做只读根因分析）。v2.6.0 hook 脚本统一 wakita- 前缀、消息带 [wakita] 标识，与 mimosa 安全扫描区分。领域 skill 已拆分至 wakita-toolkit 插件。",
   "interface": {
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/logo.png"

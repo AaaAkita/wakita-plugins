@@ -1,13 +1,15 @@
 ---
-description: 交互式生成/切换 wakita 三个用户级子智能体（scout/auditor/builder）的运行模型与思考强度
+description: 交互式生成/切换 wakita 四个用户级子智能体（scout/auditor/builder/ace）的运行模型与思考强度
 ---
 
 # /subagent-create
 
-交互式生成或更新三个**用户级**子智能体（`wakita-scout` / `wakita-builder` / `wakita-auditor`）。自 v2.4.0 起插件不再随包分发 agent，本命令把插件内置模板渲染后写入用户级 subagent 目录 `~/.zcode/agents/`，frontmatter 含 `model:` + `thoughtLevel:` + `injectAgentsMd:`。读取本机 `~/.zcode/v2/config.json`，展示所有可用 provider 和 model 供用户选择。
+交互式生成或更新四个**用户级**子智能体（`wakita-scout` / `wakita-builder` / `wakita-auditor` / `wakita-ace`）。自 v2.4.0 起插件不再随包分发 agent，本命令把插件内置模板渲染后写入用户级 subagent 目录 `~/.zcode/agents/`，frontmatter 含 `model:` + `thoughtLevel:` + `injectAgentsMd:`。读取本机 `~/.zcode/v2/config.json`，展示所有可用 provider 和 model 供用户选择。
 
-- **首次运行** = 初始化生成三个子智能体文件
+- **首次运行** = 初始化生成四个子智能体文件
 - **后续运行** = 切换 model / thoughtLevel（覆盖写，写前自动备份 `.bak`）
+
+> 角色分工：scout 探索 → builder 实现 → auditor 审查；`wakita-ace` 是攻坚位，仅在常规手段失效或严重 Bug 多次复现时升级调用（详见 `using-wakita` skill）。
 
 ## 用法
 
@@ -94,7 +96,8 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --provider <provide
   "files": [
     {"file": "wakita-scout.md", "state": "missing"},
     {"file": "wakita-builder.md", "state": "will_update"},
-    {"file": "wakita-auditor.md", "state": "identical"}
+    {"file": "wakita-auditor.md", "state": "identical"},
+    {"file": "wakita-ace.md", "state": "missing"}
   ],
   "note": "Re-run with --apply to actually write the files."
 }
@@ -104,7 +107,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --provider <provide
 
 向用户展示 `provider_name` + `model` + `thought_level` + 各文件状态，**用 AskUserQuestion 确认是否应用**：
 
-- "确认应用" - "将写入 ~/.zcode/agents/ 三个 agent 文件，已有文件先备份为 .bak"
+- "确认应用" - "将写入 ~/.zcode/agents/ 四个 agent 文件，已有文件先备份为 .bak"
 - "取消" - "不做任何改动"
 
 用户确认后，加 `--apply` 执行实际写入：
@@ -131,9 +134,9 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --provider <key> --
 >
 > 目标目录：`~/.zcode/agents/`（已有文件已备份为 `.bak`）
 >
-> ⚠️ **生效方式**：ZCode 当前**无热重载**，需**关闭并重开当前会话**或**重启 ZCode 客户端**后，新会话的 Agent 工具列表才会出现/更新这三个子智能体。
+> ⚠️ **生效方式**：ZCode 当前**无热重载**，需**关闭并重开当前会话**或**重启 ZCode 客户端**后，新会话的 Agent 工具列表才会出现/更新这四个子智能体。
 >
-> ⚠️ **插件升级提示**：wakita-governance 升级至 v2.4.0 后，插件级的 `wakita-governance:wakita-*` 三个 agent 自动消失，仅保留用户级版本。
+> ⚠️ **插件升级提示**：wakita-governance 升级至 v2.4.0 后，插件级的 `wakita-governance:wakita-*` agent 自动消失，仅保留用户级版本。
 >
 > 如需回滚：把 `~/.zcode/agents/` 下对应 `.bak` 覆盖回 `.md` 即可。
 
@@ -176,7 +179,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/inject-agent-model.py" --provider <key> --
 用户: deepseek-v4-flash
 
 [主智能体跑 dry-run，展示计划]
-主智能体: 将把三个子智能体写入 ~/.zcode/agents/（DeepSeek / deepseek-v4-flash，thoughtLevel 取模板默认 max），确认应用？
+主智能体: 将把四个子智能体写入 ~/.zcode/agents/（DeepSeek / deepseek-v4-flash，thoughtLevel 取模板默认 max），确认应用？
   - 确认应用
   - 取消
 
